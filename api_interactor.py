@@ -2,6 +2,7 @@ import sqlite3 as sql
 import requests
 from io import StringIO
 import pandas
+import apikey
 #import config
 
 API_URL = 'https://www.alphavantage.co/query'
@@ -25,6 +26,6 @@ def single_csv(symbol, apikey, function = 'TIME_SERIES_DAILY_ADJUSTED', output =
 
 ticker = input("Input a ticker\n")
 
-csv_file = single_csv(ticker, 'WI3BQ0LCU79Y3QTU')
+csv_file = single_csv(ticker, apikey.API_KEY)
 
 print(csv_file)
