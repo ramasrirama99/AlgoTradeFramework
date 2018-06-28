@@ -3,19 +3,18 @@ import requests
 from io import StringIO
 import pandas
 import apikey
-
 # import config
 
 API_URL = 'https://www.alphavantage.co/query'
 
 
-def single_csv(symbol, apikey, function='TIME_SERIES_DAILY_ADJUSTED', output='compact', datatype='csv'):
+def get_historical_data_for_ticker(symbol, function='TIME_SERIES_DAILY_ADJUSTED', outputsize='compact'):
     parameters = {
         'function': function,
         'symbol': symbol,
-        'output': output,
-        'datatype': datatype,
-        'apikey': apikey
+        'outputsize': outputsize,
+        'datatype': 'csv',
+        'apikey': apikey.API_KEY
     }
 
     response = requests.get(API_URL, params=parameters)
@@ -27,8 +26,8 @@ def single_csv(symbol, apikey, function='TIME_SERIES_DAILY_ADJUSTED', output='co
         raise RequestFailed("Status_code was not 200")
 
 
-ticker = input("Input a ticker\n")
+# ticker = input("Input a ticker\n")
 
-csv_file = single_csv(ticker, apikey.API_KEY)
+# csv_file = get_historical_data_for_ticker(ticker, apikey.API_KEY, outputsize='full')
 
-print(csv_file)
+# print(csv_file)

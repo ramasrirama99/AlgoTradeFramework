@@ -8,5 +8,5 @@ CREATE TABLE IF NOT EXISTS historical_data (
     adjusted_close      REAL,
     volume              INTEGER,
     dividend_amount     REAL,
-    split_coefficient   REAL,
+    split_coefficient   REAL
 );
