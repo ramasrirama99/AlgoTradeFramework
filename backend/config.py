@@ -53,3 +53,4 @@ TICKERS = ['ABT', 'ABBV', 'ACN', 'ACE', 'ADBE', 'ADT', 'AAP',
            'V', 'VNO', 'VMC', 'WMT', 'WBA', 'DIS', 'WM', 'WAT', 'ANTM', 'WFC',
            'WDC', 'WU', 'WY', 'WHR', 'WFM', 'WMB', 'WEC', 'WYN', 'WYNN', 'XEL',
            'XRX', 'XLNX', 'XL', 'XYL', 'YHOO', 'YUM', 'ZBH', 'ZION', 'ZTS']
+DB_NAME = 'test.db'
