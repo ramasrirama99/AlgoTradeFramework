@@ -8,7 +8,6 @@ def store_ticker_in_db(conn, ticker, outputsize='full'):
 	print(ticker)
 	
 	try:
-<<<<<<< HEAD
 		if '{' in ticker_data.columns:
 			del ticker_data['{']
 		ticker_data.to_sql("historical_data", connection, if_exists="append")
@@ -17,11 +16,9 @@ def store_ticker_in_db(conn, ticker, outputsize='full'):
                 print(ticker_data.iloc[0])
                 print('failed')
                 raise RuntimeError
-=======
 		ticker_data.to_sql("historical_data", conn, if_exists="append")
 	except sql.OperationalError:
 		print('failed')
->>>>>>> 8cd18be06e488c66bd5fe1b5c7112cf981e4cbf3
 
 
 def main():
