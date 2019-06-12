@@ -9,9 +9,14 @@ def store_ticker_in_db(connection, ticker, outputsize='full'):
 	ticker_data = api_interactor.get_historical_data_for_ticker(ticker, outputsize=outputsize)
 	print(ticker)
 	try:
+		if '{' in ticker_data.columns:
+			del ticker_data['{']
 		ticker_data.to_sql("historical_data", connection, if_exists="append")
 	except sql.OperationalError:
-		print(ticker_data)
+                print(ticker)
+                print(ticker_data.iloc[0])
+                print('failed')
+                raise RuntimeError
 
 
 def main():
