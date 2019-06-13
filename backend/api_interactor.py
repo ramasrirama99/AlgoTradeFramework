@@ -1,17 +1,15 @@
-import sqlite3 as sql
 import requests
 from io import StringIO
 import pandas
-import apikey
-# import config
+from backend.fileio import apikey
 
 API_URL = 'https://www.alphavantage.co/query'
 
 
-def get_historical_data_for_ticker(symbol, function='TIME_SERIES_DAILY_ADJUSTED', outputsize='compact'):
+def get_historical_data_for_ticker(ticker, function='TIME_SERIES_DAILY_ADJUSTED', outputsize='compact'):
     parameters = {
         'function': function,
-        'symbol': symbol,
+        'ticker': ticker,
         'outputsize': outputsize,
         'datatype': 'csv',
         'apikey': apikey.API_KEY
@@ -20,11 +18,28 @@ def get_historical_data_for_ticker(symbol, function='TIME_SERIES_DAILY_ADJUSTED'
     response = requests.get(API_URL, params=parameters)
     if response.status_code == 200:
         cols = pandas.read_csv(StringIO(response.text))
-        cols.insert(0, 'Ticker', symbol)
+        cols.insert(0, 'Ticker', ticker)
         return cols
     else:
-        raise RequestFailed("Status_code was not 200")
+        print('Status_code not 200')
 
+
+def get_intraday_data(ticker, function='TIME_SERIES_INTRADAY', outputsize='compact'):
+    parameters = {
+        'function': function,
+        'ticker': ticker,
+        'outputsize': outputsize,
+        'datatype': 'csv',
+        'apikey': apikey.API_KEY
+    }
+
+    response = requests.get(API_URL, params=parameters)
+    if response.status_code == 200:
+        cols = pandas.read_csv(StringIO(response.text))
+        cols.insert(0, 'Ticker', ticker)
+        return cols
+    else:
+        print('Status_code not 200')
 
 # ticker = input("Input a ticker\n")
 

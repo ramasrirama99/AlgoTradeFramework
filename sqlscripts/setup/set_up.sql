@@ -1,5 +1,6 @@
 CREATE TABLE IF NOT EXISTS historical_data (
-    date                TEXT,
+    history_id INTEGER,
+    date TIMESTAMP,
     ticker              TEXT,
     open                REAL,
     high                REAL,
