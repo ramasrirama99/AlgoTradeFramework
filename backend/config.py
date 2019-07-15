@@ -53,4 +53,11 @@ TICKERS = ['ABT', 'ABBV', 'ACN', 'ACE', 'ADBE', 'ADT', 'AAP',
            'V', 'VNO', 'VMC', 'WMT', 'WBA', 'DIS', 'WM', 'WAT', 'ANTM', 'WFC',
            'WDC', 'WU', 'WY', 'WHR', 'WFM', 'WMB', 'WEC', 'WYN', 'WYNN', 'XEL',
            'XRX', 'XLNX', 'XL', 'XYL', 'YHOO', 'YUM', 'ZBH', 'ZION', 'ZTS']
-DB_NAME = 'test.db'
+
+DB_NAME = 'algotrade.ci68bf6tocmv.us-east-2.rds.amazonaws.com'
+
+with open('fileio/sensitive_data.txt') as sensitive:
+    USERNAME = sensitive.readline().strip()
+    PASSWORD = sensitive.readline().strip()
+with open('fileio/db_host.txt') as host:
+    HOSTNAME = host.readline().strip()

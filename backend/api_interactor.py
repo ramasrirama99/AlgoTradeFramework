@@ -8,7 +8,7 @@ from fileio import apikey
 API_URL = 'https://www.alphavantage.co/query'
 
 
-def create_tuple(csv_file):
+def create_tuple(csv_file, timestamp_type):
     tuple_data_list = []
     for i, line in enumerate(csv.reader(csv_file)):
         row = []
@@ -18,8 +18,10 @@ def create_tuple(csv_file):
                 row.append(elem)
 
             elif j == 0:
-                row.append(datetime.strptime(elem, '%Y-%m-%d').date())
-
+                if timestamp_type == 'date':
+                    row.append(datetime.strptime(elem, '%Y-%m-%d').date())
+                elif timestamp_type == 'datetime':
+                    row.append(datetime.strptime(elem, '%Y-%m-%d'))
             else:
                 row.append(float(elem))
 
@@ -27,11 +29,11 @@ def create_tuple(csv_file):
     return tuple_data_list
 
 
-def get_data_for_symbol(parameters):
+def get_data_for_symbol(parameters, timestamp_type):
     response = requests.get(API_URL, params=parameters)
     if response.status_code == 200:
         csv_file = StringIO(response.text)
-        return create_tuple(csv_file)
+        return create_tuple(csv_file, timestamp_type)
 
     else:
         print('Status_code not 200')
@@ -47,7 +49,7 @@ def get_daily_adjusted(symbol, outputsize='compact'):
         'apikey': apikey.API_KEY
     }
 
-    return get_data_for_symbol(parameters);
+    return get_data_for_symbol(parameters, 'date');
 
 
 
@@ -61,4 +63,4 @@ def get_intraday(symbol, interval='1min', outputsize='compact'):
         'apikey': apikey.API_KEY
     }
 
-    return get_data_for_symbol(parameters);
+    return get_data_for_symbol(parameters, 'datetime');

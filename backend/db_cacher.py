@@ -19,45 +19,62 @@ def verify_columns(api_cols, db_cols):
                             % (val, db_cols[i]))
 
 
+def delete_duplicates(cur, table_name):
+    cur.execute(SQL('DELETE FROM {} WHERE ctid NOT IN(SELECT MAX(ctid) FROM {} t GROUP BY t.timestamp);')
+        .format(Identifier(table_name), Identifier(table_name)))
+
+
+def store_data(conn, cur, ticker, columns, table_name, query, data):
+    cur.execute(query.format(Identifier(table_name)))
+    mgr = CopyManager(conn, table_name, columns)
+
+    api_cols = data[0]
+    verify_columns(api_cols, columns)
+
+    raw_data = data[1:]
+    mgr.copy(raw_data)
+    delete_duplicates(cur, table_name)
+    conn.commit()
+
+    print("%s: Cached!" % ticker)
+
+
 def store_data_daily(conn, ticker_list):
     cur = conn.cursor()
+    columns = ('timestamp', 'open', 'high', 'low', 'close', 'adjusted_close', 'volume', 'dividend_amount',
+               'split_coefficient')
+
     for ticker in ticker_list:
         table_name = 'data_daily_' + ticker.lower()
-        columns = ('timestamp', 'open', 'high', 'low', 'close', 'adjusted_close', 'volume', 'dividend_amount',
-                   'split_coefficient')
 
-        cur.execute(SQL('CREATE TABLE IF NOT EXISTS {} (timestamp date, open float(8), high float(8), low float(8), '
-                        'close float(8), adjusted_close float(8), volume float(8), dividend_amount float(8), '
-                        'split_coefficient float(8));').format(Identifier(table_name)))
+        query = SQL('CREATE TABLE IF NOT EXISTS {} (timestamp date, open float(8), high float(8), low float(8), \
+            close float(8), adjusted_close float(8), volume float(8), dividend_amount float(8), \
+            split_coefficient float(8));')
 
-        mgr = CopyManager(conn, table_name, columns)
         data_daily = api.get_daily_adjusted(ticker, outputsize='full')
-        api_cols = data_daily[0]
-        verify_columns(api_cols, columns)
+        store_data(conn, cur, ticker, columns, table_name, query, data_daily)
 
-        raw_data = data_daily[1:]
-        mgr.copy(raw_data)
-        conn.commit()
-        print("%s: Cached!" % ticker)
+    cur.close()
 
 
 def store_data_intraday(conn, ticker_list):
+    cur = conn.cursor()
+    columns = ('timestamp', 'open', 'high', 'low', 'close', 'volume')
+
     for ticker in ticker_list:
-        columns = ['open', 'high', 'low', 'close', 'volume']
-        mgr = CopyManager(conn, table_name, columns)
-        data_daily = api.get_daily_adjusted(ticker, outputsize='full')
-        mgr.copy(data_daily)
-        conn.commit()
+        table_name = 'data_intraday_' + ticker.lower()
+
+        query = SQL('CREATE TABLE IF NOT EXISTS {} (timestamp datetime, open float(8), high float(8), low float(8), '
+            'close float(8), volume float(8));').format(Identifier(table_name))
+
+        data_intraday = api.get_intraday(ticker, outputsize='full')
+        store_data(conn, cur, ticker, columns, table_name, query, data_intraday)
+
+    cur.close()
 
 
 def main():
-    with open('fileio/sensitive_data.txt') as sensitive:
-        user = sensitive.readline().strip()
-        password = sensitive.readline().strip()
-    with open('fileio/db_host.txt') as host:
-        hostname = host.readline().strip()
-
-    conn = psycopg2.connect(dbname='algotaf', user=user, password=password, host=hostname)
+    conn = psycopg2.connect(dbname='algotaf', user=config.USERNAME, password=config.PASSWORD, host=config.HOSTNAME)
 
     # ticker_list = config.TICKERS
     ticker_list = ['AAPL', 'AMZN', 'MSFT']
