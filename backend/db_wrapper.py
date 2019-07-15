@@ -1,10 +1,20 @@
-import config, pandas
-import sqlite3 as sql
+import config
+import psycopg2
 
 
-def get_ticker_data_between_dates(ticker, start_date, end_date):
-    sql_query = '''SELECT * FROM historical_data WHERE ticker = "%s" AND timestamp
-                   BETWEEN "%s" AND "%s"''' % (ticker, start_date, end_date)
-    ticker_data = pandas.read_sql(sql_query, sql.connect(config.DB_NAME), parse_dates=['timestamp'])
-    return ticker_data
+def get_symbol_data_between_dates(symbol, start_date, end_date):
+    conn = psycopg2.connect(dbname='algotaf', user=config.USER, password=config.PASSWORD, host=config.HOSTNAME)
+    cur = conn.cursor()
 
+    cur.execute('''SELECT * FROM data_daily_aapl WHERE symbol = "%s" AND timestamp
+                   BETWEEN "%s" AND "%s"''' % (symbol, start_date, end_date))
+
+    data = cur.fetchall()
+    print(data)
+
+    cur.close()
+    conn.close()
+
+    return data
+
+get_symbol_data_between_dates('ABT', '2018-07-14', '2019-06-13')
