@@ -1,5 +1,4 @@
-import config
-import pandas
+import config, pandas
 import sqlite3 as sql
 
 
