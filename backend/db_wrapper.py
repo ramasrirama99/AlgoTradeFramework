@@ -26,7 +26,7 @@ def get_data_all(conn, table_name):
 
 def main():
     conn = psycopg2.connect(dbname='algotaf', user=config.USERNAME, password=config.PASSWORD, host=config.HOSTNAME)
-    get_data_interval('ABT', '2018-07-14', '2019-06-13')
+    get_data_interval(conn, 'data_daily_aapl', '2018-07-14', '2019-06-13')
 
 
 if __name__ == '__main__':

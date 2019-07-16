@@ -9,7 +9,6 @@ from psycopg2.sql import SQL, Identifier, Literal
 
 import api_interactor as api
 import config
-from fileio import apikey
 
 
 def verify_columns(api_cols, db_cols):
@@ -64,8 +63,8 @@ def store_data_intraday(conn, ticker_list):
     for ticker in ticker_list:
         table_name = 'data_intraday_' + ticker.lower()
 
-        query = SQL('CREATE TABLE IF NOT EXISTS {} (timestamp datetime, open float(8), high float(8), low float(8), '
-            'close float(8), volume float(8));').format(Identifier(table_name))
+        query = SQL('CREATE TABLE IF NOT EXISTS {} (timestamp timestamp, open float(8), high float(8), low float(8), '
+            'close float(8), volume float(8));')
 
         data_intraday = api.get_intraday(ticker, outputsize='full')
         store_data(conn, cur, ticker, columns, table_name, query, data_intraday)
@@ -80,6 +79,7 @@ def main():
     ticker_list = ['AAPL', 'AMZN', 'MSFT']
     crypto_list = ['BTC', 'LTC', 'ETH']
 
+    store_data_intraday(conn, ticker_list)
     store_data_daily(conn, ticker_list)
 
 

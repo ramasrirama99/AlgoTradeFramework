@@ -21,7 +21,7 @@ def create_tuple(csv_file, timestamp_type):
                 if timestamp_type == 'date':
                     row.append(datetime.strptime(elem, '%Y-%m-%d').date())
                 elif timestamp_type == 'datetime':
-                    row.append(datetime.strptime(elem, '%Y-%m-%d'))
+                    row.append(datetime.strptime(elem, '%Y-%m-%d %H:%M:%S'))
             else:
                 row.append(float(elem))
 
@@ -60,7 +60,7 @@ def get_intraday(symbol, interval='1min', outputsize='compact'):
         'interval' : interval,
         'outputsize': outputsize,
         'datatype': 'csv',
-        'apikey': apikey.API_KEY
+        'apikey': apikey.API_KEY1
     }
 
     return get_data_for_symbol(parameters, 'datetime');
