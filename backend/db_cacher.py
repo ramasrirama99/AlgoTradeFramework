@@ -1,11 +1,9 @@
 import psycopg2
 
-from alpha_vantage.timeseries import TimeSeries
-from alpha_vantage.techindicators import TechIndicators
-from alpha_vantage.cryptocurrencies import CryptoCurrencies
 from pgcopy import CopyManager
 from pprint import pprint
 from psycopg2.sql import SQL, Identifier, Literal
+from time import sleep
 
 import api_interactor as api
 import config
@@ -34,11 +32,10 @@ def store_data(conn, cur, ticker, columns, table_name, query, data):
     mgr.copy(raw_data)
     delete_duplicates(cur, table_name)
     conn.commit()
+    print('{message: <20}: Cached!'.format(message=table_name))
 
-    print("%s: Cached!" % ticker)
 
-
-def store_data_daily(conn, ticker_list):
+def store_data_daily(conn, ticker_list, calls_per_minute):
     cur = conn.cursor()
     columns = ('timestamp', 'open', 'high', 'low', 'close', 'adjusted_close', 'volume', 'dividend_amount',
                'split_coefficient')
@@ -50,13 +47,18 @@ def store_data_daily(conn, ticker_list):
             close float(8), adjusted_close float(8), volume float(8), dividend_amount float(8), \
             split_coefficient float(8));')
 
-        data_daily = api.get_daily_adjusted(ticker, outputsize='full')
+        if calls_per_minute >= 5:
+            sleep(60)
+            calls_per_minute = 0
+        else:
+            data_daily = api.get_daily_adjusted(ticker, outputsize='full')
+            calls_per_minute += 1
         store_data(conn, cur, ticker, columns, table_name, query, data_daily)
 
     cur.close()
 
 
-def store_data_intraday(conn, ticker_list):
+def store_data_intraday(conn, ticker_list, calls_per_minute):
     cur = conn.cursor()
     columns = ('timestamp', 'open', 'high', 'low', 'close', 'volume')
 
@@ -66,7 +68,12 @@ def store_data_intraday(conn, ticker_list):
         query = SQL('CREATE TABLE IF NOT EXISTS {} (timestamp timestamp, open float(8), high float(8), low float(8), '
             'close float(8), volume float(8));')
 
-        data_intraday = api.get_intraday(ticker, outputsize='full')
+        if calls_per_minute >= 5:
+            sleep(60)
+            calls_per_minute = 0
+        else:
+            data_intraday = api.get_intraday(ticker, outputsize='full')
+            calls_per_minute += 1
         store_data(conn, cur, ticker, columns, table_name, query, data_intraday)
 
     cur.close()
@@ -76,11 +83,13 @@ def main():
     conn = psycopg2.connect(dbname='algotaf', user=config.USERNAME, password=config.PASSWORD, host=config.HOSTNAME)
 
     # ticker_list = config.TICKERS
-    ticker_list = ['AAPL', 'AMZN', 'MSFT']
+    ticker_list = ['AAPL', 'AMZN', 'MSFT', 'AMD', 'NVDA', 'RHT', 'BABA', 'FITB', 'MU', 'FB', 'SQ', 'TSM', 'QCOM', 'MO', 'BP', 'UNH', 'CVS', 'TPR']
     crypto_list = ['BTC', 'LTC', 'ETH']
 
-    store_data_intraday(conn, ticker_list)
-    store_data_daily(conn, ticker_list)
+    calls_per_minute = 0
+
+    store_data_intraday(conn, ticker_list, calls_per_minute)
+    store_data_daily(conn, ticker_list, calls_per_minute)
 
 
 if __name__ == '__main__':
