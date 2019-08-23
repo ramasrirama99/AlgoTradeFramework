@@ -25,7 +25,8 @@ class Position:
 
     def set_quote(self):
         historical_data = data.get_data(self.ticker, time.timestamp)
-        self.cur_quote = historical_data[4]
+        if historical_data is not None:
+            self.cur_quote = historical_data[4]
 
     def update(self):
         self.set_quote()
@@ -37,9 +38,10 @@ class Position:
 
     def update_special(self):
         historical_data = data.get_data(self.ticker, time.timestamp)
-        self.dividend = historical_data[7]
-        self.split = historical_data[8]
-        self.shares *= self.split
+        if historical_data is not None:
+            self.dividend = historical_data[7]
+            self.split = historical_data[8]
+            self.shares *= self.split
 
 
 class Portfolio:
@@ -231,7 +233,8 @@ class Order:
 
     def set_quote(self):
         historical_data = data.get_data(self.ticker, time.timestamp)
-        self.cur_quote = historical_data[4]
+        if historical_data is not None:
+            self.cur_quote = historical_data[4]
 
     def make_exchange(self):
         self.set_quote()
@@ -264,6 +267,7 @@ class TimeSimulator:
         self.date = start_time.today()
         self.first = True
 
+    # maybe skip day if time tick is not in data
     def time_tick(self, interval):
         self.timestamp += interval
         if self.timestamp.today() is not self.date:
@@ -294,23 +298,78 @@ class HistoricalData:
                 self.data[ticker][i[0]] = i[1:]
 
     def get_data(self, ticker, timestamp):
-        return self.data[ticker][timestamp]
+        if ticker in self.data and timestamp in self.data[ticker]:
+            return self.data[ticker][timestamp]
+        else:
+            return None
+
+
+def mock_decision_maker(portfolio, decision_list):
+
+    if time.timestamp in decision_list:
+        portfolio.add_order(decision_list[time.timestamp])
+
+
+def populate_decision_list():
+    timestamp1 = datetime(2019, 8, 6, 10, 30, 0)
+    expiration1 = datetime(2019, 8, 6, 16, 0, 0)
+
+    timestamp2 = datetime(2019, 8, 7, 12, 30, 0)
+    expiration2 = datetime(2019, 8, 8, 16, 0, 0)
+
+    timestamp3 = datetime(2019, 8, 13, 15, 0, 0)
+    expiration3 = datetime(2019, 8, 13, 16, 0, 0)
+
+    timestamp4 = datetime(2019, 8, 15, 12, 30, 0)
+    expiration4 = datetime(2019, 8, 19, 16, 0, 0)
+
+    # edge case invalid times
+    timestamp5 = datetime(2019, 8, 19, 7, 30, 0)
+    expiration5 = datetime(2019, 8, 19, 20, 0, 0)
+
+    # edge case cancel
+    timestamp6 = datetime(2019, 8, 23, 12, 0, 0)
+    expiration6 = datetime(2019, 8, 23, 16, 0, 0)
+
+    # edge case sell not enough shares
+    timestamp7 = datetime(2019, 8, 23, 12, 1, 0)
+    expiration7 = datetime(2019, 8, 23, 16, 0, 0)
+
+    # edge case buy/sell 0
+    timestamp8 = datetime(2019, 8, 23, 12, 2, 0)
+    expiration8 = datetime(2019, 8, 23, 16, 0, 0)
+
+    # edge case no funds
+    timestamp9 = datetime(2019, 8, 23, 12, 3, 0)
+    expiration9 = datetime(2019, 8, 23, 16, 0, 0)
+
+    order1 = Order('aapl', timestamp1, expiration1, buy=True, limit=False, limit_price=0, shares=5)
+    order2 = Order('msft', timestamp2, expiration2, buy=True, limit=True, limit_price=133.5, shares=5)
+    order3 = Order('aapl', timestamp3, expiration3, buy=False, limit=False, limit_price=0, shares=1)
+    order4 = Order('aapl', timestamp4, expiration4, buy=False, limit=True, limit_price=203, shares=4)
+    order5 = Order('aapl', timestamp5, expiration5, buy=True, limit=False, limit_price=0, shares=5)
+    order6 = Order('msft', timestamp6, expiration6, buy=True, limit=True, limit_price=130, shares=5)
+    order7 = Order('msft', timestamp6, expiration6, buy=False, limit=True, limit_price=133.5, shares=20)
+    order8 = Order('msft', timestamp6, expiration6, buy=True, limit=True, limit_price=133.5, shares=0)
+    order9 = Order('msft', timestamp6, expiration6, buy=True, limit=True, limit_price=133.5, shares=100)
+
+    return {timestamp1:order1, timestamp2:order2, timestamp3:order3, timestamp4:order4, timestamp5:order5, timestamp6:order6, timestamp7:order7, timestamp8:order8, timestamp9:order9}
 
 
 def main():
-    tickers = ['aapl', 'amzn', 'msft', 'amd', 'nvda', 'rht', 'baba', 'fitb', 'mu', 'fb', 'sq', 'tsm', 'qcom', 'mo', 'bp', 'unh', 'cvs', 'tpr']
+    tickers = ['aapl', 'amzn', 'msft', 'amd', 'nvda', 'goog', 'baba', 'fitb', 'mu', 'fb', 'sq', 'tsm', 'qcom', 'mo', 'bp', 'unh', 'cvs', 'tpr']
     data = HistoricalData()
     data.populate_data(tickers)
-    timestamp = datetime(2019, 7, 11, 12,  30, 0)
+    timestamp = datetime(2019, 8, 11, 12, 30, 0)
     interval = timedelta(minutes=1)
     time = TimeSimulator(timestamp)
-    time_not_ended = True
-    order_queue = {}
+    folder = Portfolio('folder1')
+    folder.deposit(9500)
+    decision_list = populate_decision_list()
     
-    while time_not_ended:
-        # call decision function
-        # update portfolio(s)
-
+    while True:
+        mock_decision_maker(folder, decision_list)
+        folder.update()
         time.time_tick(interval)
 
 
