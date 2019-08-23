@@ -11,8 +11,6 @@ class Position:
     def __init__(self, order):
         self.ticker = order.ticker
         self.shares = order.shares
-        self.time_placed = order.time_placed
-        self.time_exchanged = order.time_exchanged
         self.init_equity = order.equity
         self.cur_equity = order.equity
         self.avg_quote = order.init_quote
@@ -20,11 +18,13 @@ class Position:
         self.shares = order.shares
         self.diff = 0
 
+
     def set_quote():
         data = get_data(ticker, time.timestamp)
         self.cur_quote = data[3]
 
-    def update(interval):
+
+    def update():
         set_quote()
         # do some stuff with checking date and then split and dividend
         temp = self.cur_equity
@@ -32,46 +32,53 @@ class Position:
         
         self.diff = self.cur_equity - temp
 
+
     def dividend():
 
 
 class Portfolio:
 
-    def __init__(self, name, positions={}, funds=0, orders=[]):
+    def __init__(self, name):
         self.name = name
-        self.positions = positions
-        self.funds = funds
-        self.orders = orders
-        self.total_equity = funds
+        self.positions = {}
+        self.orders = []
         self.history = []
-        message = 'Created Portfolio %s\n' % name
-        for key, val in enumerate(positions):
+        self.funds = 0
+        self.total_equity = funds
+
+        # move elsewhere
+        for key, val in positions.items():
             self.total_equity += val.cur_equity
             self.diff += val.diff
-            message += 'Position {ticker: <5} | {shares: <7} shares\n'.format(ticker=i.ticker, shares=i.shares)
-        for i in orders:
-            if i.limit:
-                message += 'Order {ticker: <5} | {shares: <7} shares | {limit_price: < 7} limit price | {time_placed: < 20} | {time_expire: <20}\n'
-                    .format(ticker=i.ticker, shares=i.shares, limit_price=i.limit_price, time_placed=i.time_placed, time_expire=i.time_expire)
-            else:
-                message += 'Order {ticker: <5} | {shares: <7} shares | market price | {time_placed: < 20} | {time_expire: <20}\n'
-                    .format(ticker=i.ticker, shares=i.shares, time_placed=i.time_placed, time_expire=i.time_expire)
 
-        self.history.append(History_Instance(message, positions, orders))
+
+    def history_order(order):
+        instance = History_Instance(ticker=order.ticker,
+                                    buy=order.buy,
+                                    limit=order.limit,
+                                    shares=order.shares,
+                                    equity=order.equity,
+                                    cur_quote=order.cur_quote,
+                                    time_placed=order.time_placed,
+                                    time_expire=order.time_expire,
+                                    time_exchanged=order.time_exchanged)
+        self.history.append(instance)
 
 
     def add_order(order):
         ticker = order.ticker
-        if order.buy:
+        if order.buy or (not order.buy and ticker in positions and order.shares <= positions[ticker].shares):
             self.orders.append(order)
-            message = 'Order Buy Placed {ticker: <5} | {shares: <7} shares\n'.format(ticker=ticker, shares=order.shares)
-            self.history.append(History_Instance(message, orders=order))
-        elif ticker in positions and order.shares <= positions[ticker].shares:
-            self.orders.append(order)
-            message = 'Order Sell Placed {ticker: <5} | {shares: <7} shares\n'.format(ticker=ticker, shares=order.shares)
-            self.history.append(History_Instance(message, orders=order))
+            history_order(order)
 
-    def buy_position(position):
+
+    def expire(order):
+        history_order(order)
+        orders.pop(index)
+
+
+    def buy_position(index, order, position):
+        self.orders.pop(index)
         self.funds -= position.equity
         ticker = position.ticker
 
@@ -86,21 +93,21 @@ class Portfolio:
             pos.init_equity = (weight1 + weight2)
         else:
             self.positions[ticker] = position
-        message = 'Position Buy {ticker: <5} | {shares: <7} shares\n'.format(ticker=ticker, shares=position.shares)
-        self.history.append(History_Instance(message, positions=position))
 
-    def sell_position(position):
+        history_order(order)
+
+
+    def sell_position(index, order, position):
         ticker = position.ticker
         if ticker in self.positions:
             pos = self.positions[ticker]
             if position.shares <= pos.shares:
+                self.orders.pop(index)
                 self.funds += position.equity
                 pos.shares -= position.shares
                 if pos.shares == 0:
-                    positions.remove(ticker)
+                    del positions[ticker]
 
-                message = 'Position Sell {ticker: <5} | {shares: <7} shares\n'.format(ticker=ticker, shares=position.shares)
-                self.history.append(History_Instance(message, positions=position))
 
     def sell_position(index, shares):
         pos = self.positions[index]
@@ -110,38 +117,49 @@ class Portfolio:
         if pos.shares == 0:
             self.positions.pop(index)
 
+
     def deposit(funds):
         self.funds += funds
         self.total_equity += funds
+
 
     def withdraw(funds):
         if funds <= self.funds:
             self.funds -= funds
             self.total_equity -= funds
 
-    def update(interval):
+
+    def update():
         # iterate backwards for removing? otherwise compile list and remove all those elements
-        for i in self.orders:
-            pos = i.update(interval)
-            if pos is not None:
-                if i.buy:
-                    buy_position(pos)
-                else:
-                    sell_position(pos)
+        for i, order in enumerate(self.orders):
+            if time.timestamp > i.time_expire:
+                expire(i)
+            else:
+                execute = order.update()
+                if execute and order.buy:
+                    position = Position(order)
+                    buy_position(i, order, position)
+                elif execute:
+                    position = Position(order)
+                    sell_position(i, order, position)
                 self.orders.pop(i)
-
-
         for i in self.positions:
-            i.update(interval)
+            i.update()
             self.total_equity += i.diff
 
 
 class History_Instance:
 
-    def __init__(self, message, positions=[], orders=[]):
-        self.positions = positions
-        self.orders = orders
-        self.message = message
+    # ORDERS: ticker, buy, limit, time_placed, time_expire, limit_price, shares, time_exchanged, equity
+    # DIVIDENDS: date, shares, per_share, total
+    def __init__(self, **kwargs):
+        self.kwargs = kwargs
+
+
+    def message():
+        for key, val in self.kwargs.items():
+            message = '{key: <20} | {val: <20}\n'.format(key=key, val=val)
+            print(message)
 
 
 class Order:
@@ -166,6 +184,7 @@ class Order:
         self.time_expire = time_expire
         self.time_exchanged = None
 
+
     # Default market sell
     def __init__(self, position, time_expire, limit=False, limit_price=0):
         self.position = position
@@ -186,9 +205,11 @@ class Order:
         self.time_expire = time_expire
         self.time_exchanged = None
 
+
     def set_quote():
         data = get_data(ticker, time.timestamp)
         self.cur_quote = data[3]
+
 
     def make_exchange():
         set_quote()
@@ -199,20 +220,21 @@ class Order:
                 self.init_quote = self.cur_quote
                 self.equity = self.shares * self.init_quote
                 self.exchanged = True
-                return convert_to_position()
+                return True
+            else:
+                return False
         else:
             self.time_exchanged = time.timestamp
             self.init_quote = self.cur_quote
             self.equity = self.shares * self.init_quote
             self.exchanged = True
-            return convert_to_position()
+            return True
 
-        return None
 
-    def update(interval):
+    def update():
         # do some stuff with checking date and then split
-        pos = make_exchange()
-        return pos
+        return make_exchange()
+
 
     def convert_to_position():
         if self.position is not None:
@@ -226,6 +248,7 @@ class TimeSimulator:
     def __init__(self, start_time):
         self.timestamp = start_time
 
+
     def time_tick(interval):
         timestamp += interval
 
@@ -235,6 +258,7 @@ class HistoricalData:
     def __init__(self):
         self.conn = psycopg2.connect(dbname='algotaf', user=config.USERNAME, password=config.PASSWORD, host=config.HOSTNAME)
         self.data = {}
+
 
     def populate_data(tickers):
         for ticker in tickers:
@@ -249,6 +273,7 @@ class HistoricalData:
             raw_data = db.get_data_all(self.conn, table_name)
             for i in raw_data:
                 data[ticker][i[0]] = i[1:]
+
 
     def get_data(ticker, timestamp):
         return self.data[ticker][timestamp]
