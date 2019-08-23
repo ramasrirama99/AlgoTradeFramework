@@ -83,7 +83,7 @@ def main():
     conn = psycopg2.connect(dbname='algotaf', user=config.USERNAME, password=config.PASSWORD, host=config.HOSTNAME)
 
     # ticker_list = config.TICKERS
-    ticker_list = ['AAPL', 'AMZN', 'MSFT', 'AMD', 'NVDA', 'RHT', 'BABA', 'FITB', 'MU', 'FB', 'SQ', 'TSM', 'QCOM', 'MO', 'BP', 'UNH', 'CVS', 'TPR']
+    ticker_list = ['aapl', 'amzn', 'msft', 'amd', 'nvda', 'rht', 'baba', 'fitb', 'mu', 'fb', 'sq', 'tsm', 'qcom', 'mo', 'bp', 'unh', 'cvs', 'tpr']
     crypto_list = ['BTC', 'LTC', 'ETH']
 
     calls_per_minute = 0
