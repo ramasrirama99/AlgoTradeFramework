@@ -1,1 +1,11 @@
-apikey.py
+backend/fileio/apikey.py
+backend/fileio/sensitive_data.txt
+backend/fileio/sensitive_data.py
+backend/fileio/db_host.txt
+backend/fileio/db_host.py
+
+backend/__pycache__/
+backend/fileio/__pycache__/
+backend/apis/__pycache__/
+algotaf.egg-info/
+.idea/
