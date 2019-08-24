@@ -1,7 +1,7 @@
 import psycopg2
 
-import db_wrapper as db
-import config
+import backend.db.db_wrapper as db
+from backend.fileio import config
 
 from datetime import datetime, timedelta, date
 

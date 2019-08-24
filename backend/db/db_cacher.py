@@ -5,8 +5,8 @@ from pprint import pprint
 from psycopg2.sql import SQL, Identifier, Literal
 from time import sleep
 
-import api_interactor as api
-import config
+import backend.apis.api_interactor as api
+from backend.fileio import config
 
 BACKUP = True
 
@@ -114,9 +114,9 @@ def store_data_intraday(conn, backup_conn, ticker_list, calls_per_minute):
 
 
 def main():
-    conn = psycopg2.connect(dbname='algotaf', user=config.USERNAME, password=config.PASSWORD, host=config.HOSTNAME)
+    conn = psycopg2.connect(dbname=config.DB_NAME, user=config.USERNAME, password=config.PASSWORD, host=config.HOSTNAME)
     if BACKUP:
-        backup_conn = psycopg2.connect(dbname='algotaf', user=config.USERNAME, password=config.PASSWORD, host='localhost')
+        backup_conn = psycopg2.connect(dbname=config.DB_NAME, user=config.USERNAME, password=config.PASSWORD, host=config.BACKUP_HOSTNAME)
     else:
         backup_conn = None
 

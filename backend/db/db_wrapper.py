@@ -1,7 +1,8 @@
-import config
 import psycopg2
 from datetime import datetime
 from psycopg2.sql import SQL, Identifier, Literal
+
+from backend.fileio import config
 
 
 def get_data_interval(conn, table_name, start_date, end_date):

@@ -1,3 +1,5 @@
+from backend.fileio import db_host, sensitive_data
+
 TICKERS = ['abt', 'abbv', 'acn', 'ace', 'adbe', 'adt', 'aap',
            'aes', 'aet', 'afl', 'amg', 'a', 'gas', 'apd', 'arg',
            'akam', 'aa', 'agn', 'alxn', 'alle', 'ads', 'all', 'altr',
@@ -54,10 +56,9 @@ TICKERS = ['abt', 'abbv', 'acn', 'ace', 'adbe', 'adt', 'aap',
            'wdc', 'wu', 'wy', 'whr', 'wfm', 'wmb', 'wec', 'wyn', 'wynn', 'xel',
            'xrx', 'xlnx', 'xl', 'xyl', 'yhoo', 'yum', 'zbh', 'zion', 'zts']
 
-DB_NAME = 'algotrade.ci68bf6tocmv.us-east-2.rds.amazonaws.com'
+DB_NAME = 'algotaf'
 
-with open('fileio/sensitive_data.txt') as sensitive:
-    USERNAME = sensitive.readline().strip()
-    PASSWORD = sensitive.readline().strip()
-with open('fileio/db_host.txt') as host:
-    HOSTNAME = host.readline().strip()
+USERNAME = sensitive_data.USERNAME
+PASSWORD = sensitive_data.PASSWORD
+HOSTNAME = db_host.DB_HOST
+BACKUP_HOSTNAME = 'localhost'

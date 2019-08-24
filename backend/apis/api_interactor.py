@@ -3,7 +3,7 @@ import csv, requests
 from datetime import datetime
 from io import StringIO
 
-from fileio import apikey
+from backend.fileio import apikey
 
 API_URL = 'https://www.alphavantage.co/query'
 
@@ -60,7 +60,7 @@ def get_intraday(symbol, interval='1min', outputsize='compact'):
         'interval' : interval,
         'outputsize': outputsize,
         'datatype': 'csv',
-        'apikey': apikey.API_KEY1
+        'apikey': apikey.API_KEY
     }
 
     return get_data_for_symbol(parameters, 'datetime');
