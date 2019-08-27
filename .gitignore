@@ -7,5 +7,7 @@ backend/fileio/db_host.py
 backend/__pycache__/
 backend/fileio/__pycache__/
 backend/apis/__pycache__/
+backend/db/__pycache__/
+other/__pycache__/
 algotaf.egg-info/
 .idea/
