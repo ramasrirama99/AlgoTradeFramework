@@ -1,9 +1,7 @@
 import csv
 import requests
-
 from datetime import datetime
 from io import StringIO
-
 from backend.fileio import apikey
 from other.benchmark import Benchmark
 

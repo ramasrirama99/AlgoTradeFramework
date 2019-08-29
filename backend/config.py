@@ -1,5 +1,6 @@
 from backend.fileio import db_host, sensitive_data
 
+
 TICKERS = ['abt', 'abbv', 'acn', 'ace', 'adbe', 'adt', 'aap',
            'aes', 'aet', 'afl', 'amg', 'a', 'gas', 'apd', 'arg',
            'akam', 'aa', 'agn', 'alxn', 'alle', 'ads', 'all', 'altr',

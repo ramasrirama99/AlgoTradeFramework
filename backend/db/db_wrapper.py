@@ -1,9 +1,7 @@
 import psycopg2
 from datetime import datetime
-from psycopg2.sql import SQL, Identifier, Literal
-from time import time
-
-from backend.fileio import config
+from psycopg2.sql import SQL, Identifier
+from backend import config
 from other.benchmark import Benchmark
 
 BENCH = Benchmark()

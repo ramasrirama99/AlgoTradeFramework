@@ -1,12 +1,9 @@
 import psycopg2
-
 from pgcopy import CopyManager, Replace
-from pprint import pprint
-from psycopg2.sql import SQL, Identifier, Literal
+from psycopg2.sql import SQL, Identifier
 from time import sleep
-
 import backend.apis.api_interactor as api
-from backend.fileio import config
+from backend import config
 from other.benchmark import Benchmark
 
 BACKUP = True
