@@ -4,6 +4,9 @@ from backend import config
 
 
 class HistoricalData:
+    """
+    Class for historical data pulled from database
+    """
 
     def __init__(self):
         self.conn = psycopg2.connect(dbname='algotaf',
@@ -13,6 +16,11 @@ class HistoricalData:
         self.tickers = {}
 
     def populate_data(self, tickers):
+        """
+        Populates data structure in class with daily and intraday database records
+        :param tickers: Ticker list
+        """
+
         for ticker in tickers:
             self.tickers[ticker] = {}
 
@@ -45,6 +53,14 @@ class HistoricalData:
                     self.tickers[ticker][row[0]][columns[i]] = col
 
     def get_data(self, ticker, timestamp, attribute):
+        """
+        Gets the data for a ticker at a timestamp for an attribute
+        :param ticker: Ticker name
+        :param timestamp: Datetime
+        :param attribute: Attribute or column to query
+        :return: Data or None
+        """
+
         if ticker in self.tickers and \
                 timestamp in self.tickers[ticker] and \
                 attribute in self.tickers[ticker][timestamp]:
@@ -52,6 +68,16 @@ class HistoricalData:
         return None
 
     def get_diff(self, ticker, timestamp1, timestamp2, attribute1, attribute2):
+        """
+        Get the difference between the data of a ticker with two different timestamps and attributes
+        :param ticker: Ticker name
+        :param timestamp1: Starting datetime
+        :param timestamp2: Ending datetime
+        :param attribute1: Starting attribute or column to query
+        :param attribute2: Ending attribute or column to query
+        :return:
+        """
+
         data1 = self.get_data(ticker, timestamp1, attribute1)
         data2 = self.get_data(ticker, timestamp2, attribute2)
         if data1 is not None and data2 is not None:

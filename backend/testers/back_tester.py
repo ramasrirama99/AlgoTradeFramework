@@ -8,12 +8,23 @@ BENCH = Benchmark()
 
 
 def mock_decision_maker(portfolio, decision_list):
+    """
+    A mockup of the decision function that will be made in the decision maker class
+    :param portfolio: Portfolio class
+    :param decision_list: Dict {datetime: List of Orders}
+    """
+
     if TIME.timestamp in decision_list:
         for i in decision_list[TIME.timestamp]:
             portfolio.place_order(i)
 
 
 def populate_decision_list():
+    """
+    A function to populate the decision maker mockup
+    :return: Dict {datetime: List of Orders}
+    """
+
     timestamp1 = datetime(2019, 8, 6, 10, 30, 0)
     expiration1 = datetime(2019, 8, 6, 16, 0, 0)
 

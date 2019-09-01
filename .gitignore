@@ -8,6 +8,7 @@ backend/__pycache__/
 backend/fileio/__pycache__/
 backend/apis/__pycache__/
 backend/db/__pycache__/
+backend/db/db_cacher.pyc
 backend/simulator/__pycache__/
 other/__pycache__/
 

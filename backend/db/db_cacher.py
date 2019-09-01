@@ -11,6 +11,12 @@ BENCH = Benchmark()
 
 
 def verify_columns(api_cols, db_cols):
+    """
+    Checks if API columns match with DB columns and raises exception if mismatch
+    :param api_cols: List of columns names from API call data
+    :param db_cols: List of columns names to compare with
+    """
+
     for i, val in enumerate(api_cols):
         if val != db_cols[i]:
             raise Exception('Alpha Vantage API columns and database columns mismatch. API: \'%s\' and DB: \'%s\''
@@ -18,11 +24,26 @@ def verify_columns(api_cols, db_cols):
 
 
 def delete_duplicates(cur, table_name):
+    """
+    Deletes rows with duplicate timestamps
+    :param cur: AWS psycopg2 cursor
+    :param table_name: Table name
+    """
+
     cur.execute(SQL('DELETE FROM {} WHERE ctid NOT IN(SELECT MAX(ctid) FROM {} t GROUP BY t.timestamp);')
                 .format(Identifier(table_name), Identifier(table_name)))
 
 
 def order_table(conn, cur, table_name, columns):
+    """
+    Orders table by timestamp in ascending order
+    :param conn: AWS psycopg2 connection
+    :param cur: AWS psycopg2 cursor
+    :param table_name: Table name
+    :param columns: List of column names
+    :return: List of tuples with ordered data
+    """
+
     cur.execute(SQL('SELECT * FROM {} ORDER BY {}.timestamp ASC;')
                 .format(Identifier(table_name), Identifier(table_name)))
     data = cur.fetchall()
@@ -35,6 +56,15 @@ def order_table(conn, cur, table_name, columns):
 
 
 def store_backup(conn, table_name, columns, records, query):
+    """
+    Stores records in backup database
+    :param conn: Backup psycopg2 connection
+    :param table_name: Table name
+    :param columns: List of column names
+    :param records: Ordered table records
+    :param query: Query string for creating table
+    """
+
     cur = conn.cursor()
     cur.execute(query.format(Identifier(table_name)))
 
@@ -46,13 +76,24 @@ def store_backup(conn, table_name, columns, records, query):
     
 
 def store_data(conn, cur, backup_conn, columns, table_name, query, data):
-    BENCH.mark()
+    """
+    Stores records in AWS and backup database
+    :param conn: AWS psycopg2 connection
+    :param cur: AWS psycopg2 cursor
+    :param backup_conn: Backup psycopg2 connection
+    :param columns: List of column names
+    :param table_name: Table name
+    :param query: Query string for creating table
+    :param data: Raw API data
+    """
+
+    BENCH.mark('Create table if not exists')
 
     cur.execute(query.format(Identifier(table_name)))
 
     BENCH.mark('Create table if not exists')
 
-    BENCH.mark()
+    BENCH.mark('Initial table copy')
 
     mgr = CopyManager(conn, table_name, columns)
 
@@ -64,36 +105,44 @@ def store_data(conn, cur, backup_conn, columns, table_name, query, data):
 
     BENCH.mark('Initial table copy')
 
-    BENCH.mark()
+    BENCH.mark('Delete duplicates')
 
     delete_duplicates(cur, table_name)
 
     BENCH.mark('Delete duplicates')
 
-    BENCH.mark()
+    BENCH.mark('Order table')
 
     ordered_records = order_table(conn, cur, table_name, columns)
 
     BENCH.mark('Order table')
 
-    BENCH.mark()
+    BENCH.mark('Store backup table')
 
     if BACKUP:
         store_backup(backup_conn, table_name, columns, ordered_records, query)
 
     BENCH.mark('Store backup table')
 
-    BENCH.mark()
+    BENCH.mark('Commit connections')
 
     conn.commit()
     backup_conn.commit()
 
     BENCH.mark('Commit connections')
 
-    print('{message: <20}: Cached!'.format(message=table_name))
+    print('{message: <20}: Cached!\n'.format(message=table_name))
 
 
 def store_data_daily(conn, backup_conn, ticker_list, calls_per_minute):
+    """
+    Stores daily data for each ticker
+    :param conn: AWS psycopg2 connection
+    :param backup_conn: Backup psycopg2 connection
+    :param ticker_list: List of tickers for API calls
+    :param calls_per_minute: Max limit API calls per minute
+    """
+
     cur = conn.cursor()
 
     columns = ('timestamp', 'open', 'high', 'low', 'close', 'adjusted_close', 'volume', 'dividend_amount',
@@ -119,6 +168,14 @@ def store_data_daily(conn, backup_conn, ticker_list, calls_per_minute):
 
 
 def store_data_intraday(conn, backup_conn, ticker_list, calls_per_minute):
+    """
+    Stores intraday data for each ticker
+    :param conn: AWS psycopg2 connection
+    :param backup_conn: Backup psycopg2 connection
+    :param ticker_list: List of tickers for API calls
+    :param calls_per_minute: Max limit API calls per minute
+    """
+
     cur = conn.cursor()
 
     columns = ('timestamp', 'open', 'high', 'low', 'close', 'volume')
@@ -142,6 +199,7 @@ def store_data_intraday(conn, backup_conn, ticker_list, calls_per_minute):
 
 
 def main():
+    print()
     conn = psycopg2.connect(dbname=config.DB_NAME,
                             user=config.USERNAME,
                             password=config.PASSWORD,
