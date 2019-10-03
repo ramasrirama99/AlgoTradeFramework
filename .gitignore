@@ -8,6 +8,8 @@ __pycache__/
 algotaf.egg-info/
 .idea/
 env/
+dev/
+publish-env/
 dist/
 build/
 

@@ -15,7 +15,6 @@ sudo apt-get install postgresql postgresql-contrib
 
 python3 -m venv /path/to/new/virtual/environment
 pip install -e .
-pip install -r requirements.txt
 ```
 
 ### Development
