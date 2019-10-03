@@ -15,5 +15,6 @@ other/__pycache__/
 algotaf.egg-info/
 .idea/
 env/
+dist/
 
 foobar.py
