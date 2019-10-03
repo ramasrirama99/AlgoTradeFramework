@@ -1,4 +1,3 @@
--e git+https://github.com/ramasrirama99/AlgoTradeFramework.git@97ceb150e1fff7601fbb55e5b02eb5ee07dd607e#egg=algotaf
 certifi==2019.6.16
 chardet==3.0.4
 idna==2.8
@@ -7,4 +6,5 @@ pkg-resources==0.0.0
 psycopg2==2.8.3
 pytz==2019.2
 requests==2.22.0
+schedule==0.6.0
 urllib3==1.25.3

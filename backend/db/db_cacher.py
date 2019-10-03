@@ -1,4 +1,6 @@
 import psycopg2
+import schedule
+import time
 from pgcopy import CopyManager, Replace
 from psycopg2.sql import SQL, Identifier
 from time import sleep
@@ -23,6 +25,8 @@ def verify_columns(api_cols, db_cols):
                             % (val, db_cols[i]))
 
 
+
+# Replace with distinct, order by first, then select distinct
 def delete_duplicates(cur, table_name):
     """
     Deletes rows with duplicate timestamps
@@ -198,6 +202,21 @@ def store_data_intraday(conn, backup_conn, ticker_list, calls_per_minute):
     cur.close()
 
 
+def schedule_jobs(conn, backup_conn, ticker_list):
+    for i in config.TIMES:
+        schedule.every().monday.at(i).do(store_data_intraday, conn, backup_conn, ticker_list, 0)
+        schedule.every().tuesday.at(i).do(store_data_intraday, conn, backup_conn, ticker_list, 0)
+        schedule.every().wednesday.at(i).do(store_data_intraday, conn, backup_conn, ticker_list, 0)
+        schedule.every().thursday.at(i).do(store_data_intraday, conn, backup_conn, ticker_list, 0)
+        schedule.every().friday.at(i).do(store_data_intraday, conn, backup_conn, ticker_list, 0)
+
+    schedule.every().monday.at('15:00').do(store_data_daily, conn, backup_conn, ticker_list, 0)
+    schedule.every().tuesday.at('15:00').do(store_data_daily, conn, backup_conn, ticker_list, 0)
+    schedule.every().wednesday.at('15:00').do(store_data_daily, conn, backup_conn, ticker_list, 0)
+    schedule.every().thursday.at('15:00').do(store_data_daily, conn, backup_conn, ticker_list, 0)
+    schedule.every().friday.at('15:00').do(store_data_daily, conn, backup_conn, ticker_list, 0)
+
+
 def main():
     print()
     conn = psycopg2.connect(dbname=config.DB_NAME,
@@ -219,6 +238,11 @@ def main():
     crypto_list = ['BTC', 'LTC', 'ETH']
 
     calls_per_minute = 0
+
+    # schedule_jobs(conn, backup_conn, ticker_list)
+    # while True:
+    #     schedule.run_pending()
+    #     time.sleep(1)
 
     store_data_intraday(conn, backup_conn, ticker_list, calls_per_minute)
     store_data_daily(conn, backup_conn, ticker_list, calls_per_minute)
