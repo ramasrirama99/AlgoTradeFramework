@@ -1,4 +1,4 @@
-from backend.simulator.config import TIME, DATA
+from algotaf.backend.simulator.config import TIME, DATA
 
 
 class Position:

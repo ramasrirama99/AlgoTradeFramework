@@ -1,6 +1,6 @@
 import psycopg2
-import backend.db.db_wrapper as db
-from backend import config
+from algotaf.backend.db import db_wrapper as db
+from algotaf.backend import config
 
 
 class HistoricalData:

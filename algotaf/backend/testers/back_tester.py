@@ -1,8 +1,8 @@
 from datetime import datetime
-from backend.simulator.config import TIME, INTERVAL
-from backend.simulator.Portfolio import Portfolio, Interval
-from backend.simulator.Order import Order
-from other.benchmark import Benchmark
+from algotaf.backend.simulator.config import TIME, INTERVAL
+from algotaf.backend.simulator.Portfolio import Portfolio, Interval
+from algotaf.backend.simulator.Order import Order
+from algotaf.other.benchmark import Benchmark
 
 BENCH = Benchmark()
 

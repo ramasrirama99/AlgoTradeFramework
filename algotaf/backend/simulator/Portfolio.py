@@ -1,8 +1,8 @@
 from datetime import timedelta
 from enum import Enum
 
-from backend.simulator.Position import Position
-from backend.simulator.config import TIME
+from algotaf.backend.simulator.Position import Position
+from algotaf.backend.simulator.config import TIME
 
 
 def xstr(s):

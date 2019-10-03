@@ -2,8 +2,8 @@ import csv
 import requests
 from datetime import datetime
 from io import StringIO
-from backend.fileio import apikey
-from other.benchmark import Benchmark
+from algotaf.backend.fileio import apikey
+from algotaf.other.benchmark import Benchmark
 
 API_URL = 'https://www.alphavantage.co/query'
 BENCH = Benchmark()

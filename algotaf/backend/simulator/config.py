@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
-from backend.simulator.HistoricalData import HistoricalData
-from backend.simulator.TimeSimulator import TimeSimulator
+from algotaf.backend.simulator.HistoricalData import HistoricalData
+from algotaf.backend.simulator.TimeSimulator import TimeSimulator
 
 
 TICKERS_SHORT = ['aapl', 'amzn', 'msft', 'amd', 'nvda', 'goog', 'baba', 'fitb', 'mu', 'fb', 'sq', 'tsm', 'qcom', 'mo',

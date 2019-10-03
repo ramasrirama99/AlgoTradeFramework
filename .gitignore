@@ -1,20 +1,14 @@
-backend/fileio/apikey.py
-backend/fileio/sensitive_data.txt
-backend/fileio/sensitive_data.py
-backend/fileio/db_host.txt
-backend/fileio/db_host.py
+__pycache__/
 
-backend/__pycache__/
-backend/fileio/__pycache__/
-backend/apis/__pycache__/
-backend/db/__pycache__/
-backend/db/db_cacher.pyc
-backend/simulator/__pycache__/
-other/__pycache__/
+apikey.py
+sensitive_data.py
+db_host.py
 
+__pycache__/
 algotaf.egg-info/
 .idea/
 env/
 dist/
+build/
 
 foobar.py

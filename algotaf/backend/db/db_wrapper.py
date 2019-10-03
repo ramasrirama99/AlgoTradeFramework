@@ -1,8 +1,8 @@
 import psycopg2
 from datetime import datetime
 from psycopg2.sql import SQL, Identifier
-from backend import config
-from other.benchmark import Benchmark
+from algotaf.backend import config
+from algotaf.other.benchmark import Benchmark
 
 BENCH = Benchmark()
 
