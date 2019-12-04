@@ -67,6 +67,26 @@ class HistoricalData:
             return self.tickers[ticker][timestamp][attribute]
         return None
 
+    def get_data_interval(self, ticker, timestamp1, timestamp2, attribute, interval):
+        """
+        Gets the data for a ticker at a timestamp for an attribute
+        :param ticker: Ticker name
+        :param timestamp: Datetime
+        :param attribute: Attribute or column to query
+        :return: Data or None
+        """
+
+        data = []
+        timestamp = timestamp1
+        if ticker in self.tickers:
+            while timestamp <= timestamp2:
+                if attribute in self.tickers[ticker][timestamp]:
+                    data.append(self.tickers[ticker][timestamp][attribute])
+                timestamp += interval
+        if len(data) == 0:
+            return None
+        return self.tickers[ticker][timestamp][attribute]
+
     def get_diff(self, ticker, timestamp1, timestamp2, attribute1, attribute2):
         """
         Get the difference between the data of a ticker with two different timestamps and attributes

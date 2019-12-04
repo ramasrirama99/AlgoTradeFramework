@@ -8,7 +8,7 @@ from algotaf.backend.apis import api_interactor as api
 from algotaf.backend import config
 from algotaf.other.benchmark import Benchmark
 
-BACKUP = True
+BACKUP = False
 BENCH = Benchmark()
 
 
@@ -131,7 +131,9 @@ def store_data(conn, cur, backup_conn, columns, table_name, query, data):
     BENCH.mark('Commit connections')
 
     conn.commit()
-    backup_conn.commit()
+
+    if BACKUP:
+        backup_conn.commit()
 
     BENCH.mark('Commit connections')
 

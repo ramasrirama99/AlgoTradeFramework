@@ -89,6 +89,7 @@ class Portfolio:
 
         self.name = name
         self.positions = {}
+        self.watch_list = {}
         self.orders = []
         self.history = {}
         self.funds = 0
@@ -198,6 +199,7 @@ class Portfolio:
 
         if order.shares > 0:
             ticker = order.ticker
+            self.watch(order.ticker)
             if order.buy or (ticker in self.positions and order.shares <= self.positions[ticker].shares):
                 order.set_quote()
                 if order.cur_quote * order.shares <= self.funds:
@@ -209,6 +211,15 @@ class Portfolio:
                 print('Invalid order: Not enough owned shares to sell\n')
         else:
             print('Invalid order: Shares must be > 0\n')
+
+    def cancel_order(self, index, order):
+        """
+        Cancels an order from portfolio
+        :param index: Index of order
+        :param order: Order info
+        """
+        self.orders.pop(index)
+        self.add_to_history(HistoryType.CANCEL_ORDER, 'Order Canceled', order.ticker, order=order)
 
     def expire(self, index, order):
         """
@@ -330,6 +341,24 @@ class Portfolio:
                     del self.positions[ticker]
 
         self.add_to_history(HistoryType.EXCHANGE_ORDER, 'Order Exchanged', order.ticker, order=order)
+
+    def watch(self, ticker):
+        """
+        Adds a ticker to the watch list
+        :param ticker: Ticker name
+        :return:
+        """
+        if ticker not in self.watch_list:
+            self.watch_list[ticker] = True
+
+    def unwatch(self, ticker):
+        """
+        Removes a ticker from the watch list
+        :param ticker: Ticker name
+        :return:
+        """
+        if ticker in self.watch_list:
+            del self.watch_list[ticker]
 
     def update(self):
         """
