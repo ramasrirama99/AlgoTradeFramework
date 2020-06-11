@@ -4,9 +4,9 @@ import time
 from pgcopy import CopyManager, Replace
 from psycopg2.sql import SQL, Identifier
 from time import sleep
-from algotrade.backend.apis import api_interactor as api
-from algotrade.backend import config
-from algotrade.other.benchmark import Benchmark
+from algotaf.backend.apis import api_interactor as api
+from algotaf.backend import config
+from algotaf.other.benchmark import Benchmark
 
 BACKUP = False
 BENCH = Benchmark()

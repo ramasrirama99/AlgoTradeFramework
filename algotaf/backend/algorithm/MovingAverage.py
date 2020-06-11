@@ -2,7 +2,11 @@ from datetime import datetime, timedelta
 from algotaf.backend.simulator.config import TIME, DATA, INTERVAL, DAY_INTERVAL
 from algotaf.backend.simulator.Portfolio import Portfolio, Interval, HistoryType
 from algotaf.backend.simulator.Order import Order
+<<<<<<< HEAD
 from algotaf.backend.algorithm import Algorithms
+=======
+from algotaf.backend.algorithm import Algorithm
+>>>>>>> f357dc8f4ecc08860b2a34ee072acdc7e1789201
 from algotaf.other.benchmark import Benchmark
 
 

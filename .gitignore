@@ -5,7 +5,7 @@ sensitive_data.py
 db_host.py
 
 __pycache__/
-algotrade.egg-info/
+algotaf.egg-info/
 .idea/
 env/
 dev/
