@@ -4,10 +4,10 @@ from keras.optimizers import *
 from datetime import datetime, timedelta
 from sklearn.metrics import classification_report
 
-from algotrade.backend.models.LSTM import lstm
-from algotrade.backend.models.CNN import *
-from algotrade.backend.experiments.dataproc import process_cnn, process_lstm
-from algotrade.backend.db.db_wrapper import get_data_all, connect, get_data_interval
+from algotaf.backend.models.LSTM import lstm
+from algotaf.backend.models.CNN import *
+from algotaf.backend.experiments.dataproc import process_cnn, process_lstm
+from algotaf.backend.db.db_wrapper import get_data_all, connect, get_data_interval
 
 
 def train_cnn(model, x_train, y_train, x_test, y_test):

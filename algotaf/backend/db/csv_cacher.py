@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
-from algotrade.backend.db.db_wrapper import get_data_interval, connect
+from algotaf.backend.db.db_wrapper import get_data_interval, connect
 
 
 def csv_daily_data(conn, ticker, start_date, end_date, path):

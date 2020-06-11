@@ -1,5 +1,4 @@
 import psycopg2
-import schedule
 import time
 from pgcopy import CopyManager, Replace
 from psycopg2.sql import SQL, Identifier

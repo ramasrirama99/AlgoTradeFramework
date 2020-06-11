@@ -13,8 +13,10 @@ An AWS PostgreSQL DB instance
 sudo apt-get update
 sudo apt-get install postgresql postgresql-contrib
 
-python3 -m venv /path/to/new/virtual/environment
+python3.6 -m venv /path/to/new/virtual/environment
+source /path/to/new/virtual/environment/bin/activate
 pip install -e .
+pip install -r requirements.txt
 ```
 
 ### Development

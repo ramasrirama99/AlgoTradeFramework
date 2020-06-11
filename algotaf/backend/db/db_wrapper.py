@@ -2,8 +2,8 @@ import psycopg2
 import pandas as pd
 from datetime import datetime
 from psycopg2.sql import SQL, Identifier
-from algotrade.backend import config
-from algotrade.other.benchmark import Benchmark
+from algotaf.backend import config
+from algotaf.other.benchmark import Benchmark
 
 BENCH = Benchmark()
 
