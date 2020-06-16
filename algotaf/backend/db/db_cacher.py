@@ -241,9 +241,9 @@ def store_data_daily_bulk(conn, backup_conn, ticker_list):
             if actions[j] == None:
                 store_data(conn, cur, backup_conn, columns, table_name, query, data_daily)
             else:
-                if actions[j]['Dividend'] and actions[j]['Stock Split']:
+                if actions[j]['Dividends'] and actions[j]['Stock Split']:
                     store_data(conn, cur, backup_conn, columns, table_name, query, data_daily)
-                elif actions[j]['Dividend']:
+                elif actions[j]['Dividends']:
                     store_data(conn, cur, backup_conn, columns_dividend, table_name, query, data_daily)
                 elif actions[j]['Stock Split']:
                     store_data(conn, cur, backup_conn, columns_split, table_name, query, data_daily)
