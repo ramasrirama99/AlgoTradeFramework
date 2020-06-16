@@ -43,6 +43,16 @@ def simple(filters=64, num_classes=4, input_shape=None, dropout=0.5):
     return model
 
 
+def simple_stream(filters=64, num_classes=1, input_shape=None, dropout=0.5):
+    model = Sequential()
+    model.add(Conv1D(filters, 2, activation='relu', input_shape=input_shape))
+    model.add(MaxPooling1D(pool_size=2))
+    model.add(Flatten())
+    model.add(Dense(50, activation='relu'))
+    model.add(Dense(num_classes))
+    return model
+
+
 def alexnet(filters=64, num_classes=4, input_shape=None, dropout=0.4):
     model = Sequential()
     # 1st Convolutional Layer

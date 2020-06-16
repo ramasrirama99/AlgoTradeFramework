@@ -1,5 +1,5 @@
 import yfinance as yf
-
+from datetime import datetime
 
 def query(ticker, dates):
 	stock = yf.Ticker(ticker)
@@ -95,14 +95,46 @@ def profits(ticker, date, profit1, profit2, initial1, initial2):
 
 
 def main():
-	TICKER = 'BAC'
-	DATES = ['2020-04-16', '2020-04-23', '2020-04-30', '2020-05-07', '2020-05-14']
-	puts, calls, price = query(TICKER, DATES)
-	print('Current Price: {}'.format(price))
-	for i, val in enumerate(puts):	
-		p1, i1 = calculate(puts[i], True, price)
-		c1, i2 = calculate(calls[i], False, price)
-		profits(TICKER, DATES[i], p1, c1, i1, i2)
+	columns = ['Open', 'High', 'Low', 'Close', 'Volume', 'Dividends', 'Stock Splits']
+	tickers = ['AAPL', 'MSFT', 'ABT', 'ARG', 'APC']
+	data = yf.download(tickers=tickers, period='max', interval='1d', group_by='ticker',auto_adjust=True,prepost=True,threads=True, proxy=None, actions=True)
+	print(data)
+
+	# msft = yf.Ticker('MSFT')
+	# data = msft.history(period='max')
+	print(data.index)
+	print(data.columns)
+	all_data_list = []
+	
+	for stock in tickers:
+		stock_records = data[stock]
+		tuple_data_list = []
+		print(stock)
+		print(data[stock])
+		for i, record in stock_records.iterrows():
+			row = []
+			row.append(i.to_pydatetime().date())
+			for col in columns:
+				row.append(record[col])
+			tuple_data_list.append(tuple(row))
+		all_data_list.append(tuple_data_list)
+		# print(tuple_data_list)
+	# for ticker, new_df in data.groupby(level=):
+	# 	print(new_df)
+
+
+	# TICKER = 'BAC'
+	# DATES = ['2020-04-16', '2020-04-23', '2020-04-30', '2020-05-07', '2020-05-14']
+	# puts, calls, price = query(TICKER, DATES)
+	# print('Current Price: {}'.format(price))
+	# for i, val in enumerate(puts):	
+	# 	p1, i1 = calculate(puts[i], True, price)
+	# 	c1, i2 = calculate(calls[i], False, price)
+	# 	profits(TICKER, DATES[i], p1, c1, i1, i2)
+
+
+
+
 
 if __name__ == '__main__':
 	main()

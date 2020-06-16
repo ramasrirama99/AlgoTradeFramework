@@ -5,7 +5,6 @@ joblib==0.15.1
 numpy==1.18.5
 pandas==1.0.4
 pgcopy==1.4.1
-pkg-resources==0.0.0
 psycopg2==2.8.5
 python-dateutil==2.8.1
 pytz==2020.1
@@ -16,3 +15,6 @@ six==1.15.0
 ta==0.5.25
 threadpoolctl==2.1.0
 urllib3==1.25.9
+tda-api==0.3.2
+yfinance==0.1.54
+selenium==4.0.0a6post2

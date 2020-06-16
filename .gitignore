@@ -3,6 +3,8 @@ __pycache__/
 apikey.py
 sensitive_data.py
 db_host.py
+tdam_keys.py
+token.pickle
 
 __pycache__/
 algotaf.egg-info/

@@ -20,7 +20,7 @@ def get_data_interval(conn, table_name, start_date, end_date, pandas=False):
 
     cur = conn.cursor()
 
-    cur.execute(SQL('SELECT * FROM {} WHERE timestamp BETWEEN %s AND %s;')
+    cur.execute(SQL('SELECT * FROM {} WHERE timestamp BETWEEN %s AND %s ORDER BY timestamp ASC;')
                 .format(Identifier(table_name)), (start_date, end_date))
 
     data = cur.fetchall()
@@ -39,7 +39,7 @@ def get_data_all(conn, table_name, pandas=False):
     """
 
     if pandas:
-        data = pd.read_sql_query('SELECT * FROM {};'
+        data = pd.read_sql_query('SELECT * FROM {} ORDER BY timestamp ASC;'
                                     .format(Identifier(table_name)),
                                     conn)
     else:

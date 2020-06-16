@@ -25,9 +25,9 @@ def train_cnn(model, x_train, y_train, x_test, y_test):
 
 def train_lstm(model, x_train, y_train, x_test, y_test):
     opt = Adagrad(lr=0.02)
-    ckpt_save = callbacks.ModelCheckpoint('best-lstm.hdf5', save_best_only=True, monitor='val_accuracy', mode='max')
+    ckpt_save = callbacks.ModelCheckpoint('best-cnn.hdf5', save_best_only=True, monitor='val_accuracy', mode='max')
     reduce_lr = callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.9, patience=25, min_lr=0.000001, verbose=1)
-    model.compile(loss='mean_squared_error', optimizer=opt, metrics=['accuracy'])  # Try SGD, adam, adagrad and compare!!!
+    model.compile(loss='mean_squared_error', optimizer=opt)  # Try SGD, adam, adagrad and compare!!!
     model.fit(x_train, y_train, epochs=5, batch_size=1, verbose=2, validation_data=(x_test, y_test), shuffle=False, callbacks=[reduce_lr, ckpt_save])
 
 

@@ -12,7 +12,7 @@ class HistoricalData:
         self.conn = psycopg2.connect(dbname='algotaf',
                                      user=config.USERNAME,
                                      password=config.PASSWORD,
-                                     host=config.BACKUP_HOSTNAME)
+                                     host=config.HOSTNAME)
         self.tickers = {}
 
     def populate_data(self, tickers):
