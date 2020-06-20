@@ -47,16 +47,17 @@ def create_tuple_json(data, timestamp_type):
     tuple_data_list = []
     for i, record in enumerate(data):
         row = []
-        row.append(datetime.fromtimestamp(record['datetime']/1000.0))
+        if timestamp_type == client.Client.PriceHistory.FrequencyType.DAILY:
+            row.append(datetime.fromtimestamp(record['datetime']/1000.0).date())
+        elif timestamp_type == client.Client.PriceHistory.FrequencyType.EVERY_MINUTE:
+            row.append(datetime.fromtimestamp(record['datetime']/1000.0))
         row.append(record['open'])
         row.append(record['high'])
         row.append(record['low'])
         row.append(record['close'])
         row.append(record['volume'])
-        if timestamp_type == client.Client.PriceHistory.FrequencyType.DAILY:
-            row.append(datetime.fromtimestamp(record['datetime']/1000.0).date())
-        elif timestamp_type == client.Client.PriceHistory.FrequencyType.EVERY_MINUTE:
-            row.append(datetime.fromtimestamp(record['datetime']/1000.0))
+        row.append(0)
+        row.append(0)
         tuple_data_list.append(tuple(row))
     return tuple_data_list
 
@@ -64,7 +65,6 @@ def create_tuple_json(data, timestamp_type):
 def create_tuple_pandas(data, timestamp_type, bulk=False, tickers=[]):
     columns = ['Open', 'High', 'Low', 'Close', 'Volume', 'Dividends', 'Stock Splits']
     if bulk:
-        all_actions = []
         all_data_list = []
         for stock in tickers:
             stock_records = data[stock.upper()]
@@ -79,14 +79,10 @@ def create_tuple_pandas(data, timestamp_type, bulk=False, tickers=[]):
                 for col in columns:
                     if col in record:
                         row.append(record[col])
-                    else:
-                        actions[col] = False
                 tuple_data_list.append(tuple(row))
-            all_actions.append(actions)
             all_data_list.append(tuple_data_list)
-        return all_data_list, all_actions
+        return all_data_list
     else:
-        actions = {'Dividends': True, 'Stock Splits': True}
         tuple_data_list = []
         for i, record in data.iterrows():
             row = []
@@ -97,10 +93,8 @@ def create_tuple_pandas(data, timestamp_type, bulk=False, tickers=[]):
             for col in columns:
                 if col in record:
                     row.append(record[col])
-                else:
-                    actions[col] = False
             tuple_data_list.append(tuple(row))
-        return tuple_data_list, actions
+        return tuple_data_list
 
 
 def get_data_yfinance(parameters, bulk=False):
@@ -156,7 +150,8 @@ def get_data_tdameritrade(parameters):
         period_type=parameters['period_type'],
         period=parameters['period'],
         frequency_type=parameters['frequency_type'],
-        frequency=parameters['frequency'])
+        frequency=parameters['frequency'],
+        need_extended_hours_data=parameters['need_extended_hours_data'])
     assert r.ok, r.raise_for_status()
     data = r.json()
     return create_tuple_json(data['candles'], parameters['frequency_type'])
@@ -169,7 +164,6 @@ def get_daily_adjusted(symbol, api_name, bulk=False):
     :param outputsize: Output size of API data
     :return: List of tuples of data
     """
-    actions = None
     if api_name == 'alphavantage':
         parameters = {
             'function': 'TIME_SERIES_DAILY',
@@ -186,7 +180,8 @@ def get_daily_adjusted(symbol, api_name, bulk=False):
             'frequency_type': client.Client.PriceHistory.FrequencyType.DAILY,
             'frequency': client.Client.PriceHistory.Frequency.DAILY,
             'apikey': tdam_keys.CLIENT_ID,
-            'symbol': symbol.upper()
+            'symbol': symbol.upper(),
+            'need_extended_hours_data': False
         }
         data = get_data_tdameritrade(parameters)
     elif api_name == 'yfinance':
@@ -201,8 +196,8 @@ def get_daily_adjusted(symbol, api_name, bulk=False):
             'proxy': None,
             'actions': True,
         }
-        data, actions = get_data_yfinance(parameters, bulk=bulk)
-    return data, actions
+        data = get_data_yfinance(parameters, bulk=bulk)
+    return data
 
 
 def get_intraday(symbol, api_name):
@@ -230,7 +225,8 @@ def get_intraday(symbol, api_name):
             'frequency_type': client.Client.PriceHistory.FrequencyType.MINUTE,
             'frequency': client.Client.PriceHistory.Frequency.EVERY_MINUTE,
             'apikey': tdam_keys.CLIENT_ID,
-            'symbol': symbol
+            'symbol': symbol,
+            'need_extended_hours_data': True
         }
         data = get_data_tdameritrade(parameters)
     elif api_name == 'yfinance':

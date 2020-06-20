@@ -158,11 +158,7 @@ def store_data_daily(conn, backup_conn, ticker_list):
 
     cur = conn.cursor()
 
-    columns = ('timestamp', 'open', 'high', 'low', 'close', 'volume', 'dividend_amount',
-               'split_coefficient')
-    columns_dividend = ('timestamp', 'open', 'high', 'low', 'close', 'volume')
-    columns_split = ('timestamp', 'open', 'high', 'low', 'close', 'volume', 'split_coefficient')
-    columns_none = ('timestamp', 'open', 'high', 'low', 'close', 'volume')
+    columns = ('timestamp', 'open', 'high', 'low', 'close', 'volume', 'dividend_amount', 'split_coefficient')
 
     for ticker in ticker_list:
         table_name = 'data_daily_' + ticker.lower()
@@ -175,23 +171,13 @@ def store_data_daily(conn, backup_conn, ticker_list):
         BENCH.mark('API Call')
         while not success:
             try:
-                data_daily, actions = api.get_daily_adjusted(ticker, 'yfinance')
+                data_daily = api.get_daily_adjusted(ticker, 'tdameritrade')
                 success = True
             except requests.exceptions.ConnectionError:
                 print('ERROR: SLEEPING...')
                 sleep(1)
         BENCH.mark('API Call')
-        if actions == None:
-            store_data(conn, cur, backup_conn, columns, table_name, query, data_daily)
-        else:
-            if actions['Dividends'] and actions['Stock Split']:
-                store_data(conn, cur, backup_conn, columns, table_name, query, data_daily)
-            elif actions['Dividends']:
-                store_data(conn, cur, backup_conn, columns_dividend, table_name, query, data_daily)
-            elif actions['Stock Split']:
-                store_data(conn, cur, backup_conn, columns_split, table_name, query, data_daily)
-            else:
-                store_data(conn, cur, backup_conn, columns_none, table_name, query, data_daily)
+        store_data(conn, cur, backup_conn, columns, table_name, query, data_daily)
 
     cur.close()
 
@@ -241,11 +227,11 @@ def store_data_daily_bulk(conn, backup_conn, ticker_list):
             if actions[j] == None:
                 store_data(conn, cur, backup_conn, columns, table_name, query, data_daily)
             else:
-                if actions[j]['Dividends'] and actions[j]['Stock Split']:
+                if actions[j]['Dividends'] and actions[j]['Stock Splits']:
                     store_data(conn, cur, backup_conn, columns, table_name, query, data_daily)
                 elif actions[j]['Dividends']:
                     store_data(conn, cur, backup_conn, columns_dividend, table_name, query, data_daily)
-                elif actions[j]['Stock Split']:
+                elif actions[j]['Stock Splits']:
                     store_data(conn, cur, backup_conn, columns_split, table_name, query, data_daily)
                 else:
                     store_data(conn, cur, backup_conn, columns_none, table_name, query, data_daily)
@@ -327,9 +313,9 @@ def main():
     #     schedule.run_pending()
     #     time.sleep(1)
 
-    # store_data_intraday(conn, backup_conn, ticker_list)
-    # store_data_daily(conn, backup_conn, ticker_list)
-    store_data_daily_bulk(conn, backup_conn, ticker_list)
+    store_data_intraday(conn, backup_conn, ticker_list)
+    store_data_daily(conn, backup_conn, ticker_list)
+    # store_data_daily_bulk(conn, backup_conn, ticker_list)
 
 
 if __name__ == '__main__':
