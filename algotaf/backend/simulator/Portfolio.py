@@ -360,29 +360,46 @@ class Portfolio:
         if ticker in self.watch_list:
             del self.watch_list[ticker]
 
+    # def update(self):
+    #     """
+    #     Updates all the orders and positions in portfolio
+    #     """
+
+    #     orders = self.orders.copy()
+    #     for i, order in enumerate(orders):
+    #         if TIME.timestamp > order.time_expire:
+    #             self.expire(i, order)
+    #         else:
+    #             execute = order.update()
+    #             if execute and order.buy:
+    #                 position = Position(order)
+    #                 self.buy_position(i, order, position)
+    #             elif execute:
+    #                 position = Position(order)
+    #                 self.sell_position(i, order, position)
+    #     self.total_equity = self.funds
+
+    #     for ticker, position in self.positions.items():
+    #         position.update_special()
+    #         self.calc_split(ticker)
+    #         self.calc_dividends(ticker)
+
+    #         position.update()
+    #         self.total_equity += position.cur_equity
+
+    def add_position(self, order):
+        self.positions[order.ticker] = Position(order)
+
     def update(self):
-        """
-        Updates all the orders and positions in portfolio
-        """
-
-        orders = self.orders.copy()
-        for i, order in enumerate(orders):
-            if TIME.timestamp > order.time_expire:
-                self.expire(i, order)
-            else:
-                execute = order.update()
-                if execute and order.buy:
-                    position = Position(order)
-                    self.buy_position(i, order, position)
-                elif execute:
-                    position = Position(order)
-                    self.sell_position(i, order, position)
-        self.total_equity = self.funds
-
+        current_value = self.funds
         for ticker, position in self.positions.items():
-            position.update_special()
-            self.calc_split(ticker)
-            self.calc_dividends(ticker)
-
-            position.update()
-            self.total_equity += position.cur_equity
+            quote = self.env.get_quote(ticker)
+            # val = eval_quote(quote)
+            if quote:
+                val = sum([i for i in quote.values()])
+                val /= len(quote)
+            else:
+                val = 0
+            current_value += val
+            position.cur_quote = val
+        return current_value
