@@ -3,6 +3,7 @@ from algotaf.backend.simulator.config import TIME, INTERVAL
 from algotaf.backend.simulator.Portfolio import Portfolio, Interval
 from algotaf.backend.simulator.Order import Order
 from algotaf.other.benchmark import Benchmark
+from algotaf.backend.testers.tester import StrategyEnvironment
 
 BENCH = Benchmark()
 
@@ -73,26 +74,68 @@ def populate_decision_list():
             timestamp9: [order9]}
 
 
-def main():
-    print()
-    folder = Portfolio('folder1')
-    folder.deposit(9500)
-    decision_list = populate_decision_list()
-    cur_date = TIME.date
-    # BENCH.mark()
-    print(cur_date)
-    folder.print_portfolio(Interval.ALL)
-    while TIME.timestamp <= datetime(2019, 8, 23, 20, 0, 0):
-        mock_decision_maker(folder, decision_list)
-        folder.update()
-        TIME.time_tick(INTERVAL)
+class Backtester(StrategyEnvironment):
+    def __init__(self, strategy, portfolio, start_time='first_date', end_time='today'):
+        self.start_time = start_time
+        self.end_time = end_time
+        self.curr_time = start_time
 
-        if cur_date != TIME.date:
-            print(cur_date)
-            cur_date = TIME.date
-            folder.print_portfolio(Interval.ALL)
-            # BENCH.mark('One days time')
-            # BENCH.mark()
+        if strategy is None:
+            print("strategy is None\n")
+        else:
+            strategy.env = self
+            portfolio.env = self
+
+    def run(self):
+        while curr_time < end_time:
+            tick()
+
+    def tick(self):
+        portfolio.update(self.curr_time)
+        orders, interval = strategy.get_orders()
+        for order in orders:
+            portfolio.add_position(order)
+
+        if interval < ASAP:
+            self.curr_time += interval.to_datetime()
+        else:
+            exit()
+
+    def get_quote(self, ticker, timestamp=None):
+        if timestamp is None:
+            timestamp = self.curr_time
+
+        quote = {}
+        quote['open'] = DATA.get_data(self.ticker, timestamp, 'open')
+        quote['high'] = DATA.get_data(self.ticker, timestamp, 'high')
+        quote['low'] = DATA.get_data(self.ticker, timestamp, 'low')
+        quote['close'] = DATA.get_data(self.ticker, timestamp, 'close')
+        quote['volume'] = DATA.get_data(self.ticker, timestamp, 'volume')
+
+        return quote
+
+
+def main():
+    # print()
+    # folder = Portfolio('folder1')
+    # folder.deposit(9500)
+    # decision_list = populate_decision_list()
+    # cur_date = TIME.date
+    # # BENCH.mark()
+    # print(cur_date)
+    # folder.print_portfolio(Interval.ALL)
+    # while TIME.timestamp <= datetime(2019, 8, 23, 20, 0, 0):
+    #     mock_decision_maker(folder, decision_list)
+    #     folder.update()
+    #     TIME.time_tick(INTERVAL)
+
+    #     if cur_date != TIME.date:
+    #         print(cur_date)
+    #         cur_date = TIME.date
+    #         folder.print_portfolio(Interval.ALL)
+    #         # BENCH.mark('One days time')
+    #         # BENCH.mark()
+    env = Backtester(None, None)
 
 
 if __name__ == '__main__':
