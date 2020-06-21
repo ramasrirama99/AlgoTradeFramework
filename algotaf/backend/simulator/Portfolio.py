@@ -46,7 +46,31 @@ class Interval(Enum):
     WEEK = 8
     MONTH = 9
     YEAR = 10
-    ALL = 11
+    ASAP = 11
+    ALL = 12
+
+    def to_timedelta(interval):
+        if interval is Interval.MINUTE1:
+            return timedelta(minutes=1)
+        elif interval is Interval.MINUTE1:
+            return timedelta(minutes=5)
+        elif interval is Interval.MINUTE1:
+            return timedelta(minutes=10)
+        elif interval is Interval.MINUTE1:
+            return timedelta(minutes=15)
+        elif interval is Interval.MINUTE1:
+            return timedelta(minutes=30)
+        elif interval is Interval.MINUTE1:
+            return timedelta(hours=1)
+        elif interval is Interval.MINUTE1:
+            return timedelta(days=1)
+        elif interval is Interval.MINUTE1:
+            return timedelta(weeks=1)
+        elif interval is Interval.MINUTE1:
+            return timedelta(years=1)
+        else:
+            print('Invalid Interval: %d\n' % interval)
+
 
 
 class HistoryInstance:
@@ -95,6 +119,7 @@ class Portfolio:
         self.funds = 0
         self.diff = 0
         self.total_equity = 0
+
 
     def add_to_history(self, history_type, message, ticker, order=None, position=None):
         """
@@ -396,8 +421,7 @@ class Portfolio:
             quote = self.env.get_quote(ticker)
             # val = eval_quote(quote)
             if quote:
-                val = sum([i for i in quote.values()])
-                val /= len(quote)
+                val = (quote['open'] + quote['close']) / 2
             else:
                 val = 0
             current_value += val
