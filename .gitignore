@@ -5,6 +5,8 @@ sensitive_data.py
 db_host.py
 tdam_keys.py
 token.pickle
+alpaca_keys.py
+best-cnn.hdf5
 
 __pycache__/
 algotaf.egg-info/

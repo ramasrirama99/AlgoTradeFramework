@@ -1,6 +1,7 @@
 import psycopg2
 import time
 import requests
+import sys
 from pgcopy import CopyManager, Replace
 from psycopg2.sql import SQL, Identifier
 from time import sleep
@@ -262,7 +263,7 @@ def store_data_intraday(conn, backup_conn, ticker_list):
         BENCH.mark('API Call')
         while not success:
             try:
-                data_intraday = api.get_intraday(ticker, 'tdameritrade')
+                data_intraday = api.get_intraday(ticker, 'alpaca')
                 success = True
             except requests.exceptions.ConnectionError:
                 print('ERROR: SLEEPING...')
@@ -289,6 +290,7 @@ def schedule_jobs(conn, backup_conn, ticker_list):
 
 
 def main():
+    num = int(sys.argv[1])
     print()
     conn = psycopg2.connect(dbname=config.DB_NAME,
                             user=config.USERNAME,
@@ -303,7 +305,7 @@ def main():
     else:
         backup_conn = None
 
-    ticker_list = config.TICKERS
+    ticker_list = config.TICKERS[num]
     # ticker_list = ['aapl', 'amzn', 'msft', 'amd', 'nvda', 'goog', 'baba', 'fitb', 'mu', 'fb', 'sq', 'tsm', 'qcom', 'mo',
     #                'bp', 'unh', 'cvs', 'tpr']
     crypto_list = ['BTC', 'LTC', 'ETH']

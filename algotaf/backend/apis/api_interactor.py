@@ -1,11 +1,12 @@
 import csv
 import requests
 import yfinance as yf
+import pandas as pd
+from alpaca_trade_api import REST
 from datetime import datetime, timedelta
 from io import StringIO
 from tda import auth, client
-from algotaf.backend.fileio import apikey
-from algotaf.backend.fileio import tdam_keys
+from algotaf.backend.fileio import apikey, tdam_keys, alpaca_keys
 from algotaf.other.benchmark import Benchmark
 from algotaf.backend.apis.tdam import authenticate_client
 
@@ -62,39 +63,17 @@ def create_tuple_json(data, timestamp_type):
     return tuple_data_list
 
 
-def create_tuple_pandas(data, timestamp_type, bulk=False, tickers=[]):
-    columns = ['Open', 'High', 'Low', 'Close', 'Volume', 'Dividends', 'Stock Splits']
-    if bulk:
-        all_data_list = []
-        for stock in tickers:
-            stock_records = data[stock.upper()]
-            tuple_data_list = []
-            actions = {'Dividends': True, 'Stock Splits': True}
-            for i, record in stock_records.iterrows():
-                row = []
-                if timestamp_type == '1d':
-                    row.append(i.to_pydatetime().date())
-                elif timestamp_type == '1m':
-                    row.append(i.to_pydatetime())
-                for col in columns:
-                    if col in record:
-                        row.append(record[col])
-                tuple_data_list.append(tuple(row))
-            all_data_list.append(tuple_data_list)
-        return all_data_list
-    else:
-        tuple_data_list = []
-        for i, record in data.iterrows():
-            row = []
-            if timestamp_type == '1d':
-                row.append(i.to_pydatetime().date())
-            elif timestamp_type == '1m':
-                row.append(i.to_pydatetime())
-            for col in columns:
-                if col in record:
-                    row.append(record[col])
-            tuple_data_list.append(tuple(row))
-        return tuple_data_list
+def create_tuple_pandas(data):
+    columns = data.columns
+    tuple_data_list = []
+    for i, record in data.iterrows():
+        row = []
+        row.append(i.to_pydatetime())
+        for col in columns:
+            if col in record:
+                row.append(record[col])
+        tuple_data_list.append(tuple(row))
+    return tuple_data_list
 
 
 def get_data_yfinance(parameters, bulk=False):
@@ -157,6 +136,16 @@ def get_data_tdameritrade(parameters):
     return create_tuple_json(data['candles'], parameters['frequency_type'])
 
 
+def get_data_alpaca(parameters):
+    api = REST(alpaca_keys.APCA_API_KEY_ID, alpaca_keys.APCA_API_SECRET_KEY)
+    data = api.get_aggs(parameters['symbol'],
+           multiplier=parameters['multiplier'],
+           timespan=parameters['timespan'],
+           _from=parameters['_from'],
+           to=parameters['to']).df
+    return create_tuple_pandas(data)
+
+
 def get_daily_adjusted(symbol, api_name, bulk=False):
     """
     Get data from API call for daily data
@@ -184,6 +173,7 @@ def get_daily_adjusted(symbol, api_name, bulk=False):
             'need_extended_hours_data': False
         }
         data = get_data_tdameritrade(parameters)
+
     elif api_name == 'yfinance':
         parameters = {
             'symbols': symbol,
@@ -242,4 +232,13 @@ def get_intraday(symbol, api_name):
             'actions': False,
         }
         data = get_data_yfinance(parameters)
+    elif api_name == 'alpaca':
+        parameters = {
+            'symbol': symbol.upper(),
+            'multiplier': 1,
+            'timespan': 'minute',
+            '_from': '2000-01-01',
+            'to': '2100-01-01'
+        }
+        data = get_data_alpaca(parameters)
     return data

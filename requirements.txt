@@ -18,3 +18,5 @@ urllib3==1.25.9
 tda-api==0.3.2
 yfinance==0.1.54
 selenium==4.0.0a6post2
+alpaca-trade-api==0.48
+webdriver-manager==3.1.0
