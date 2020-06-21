@@ -10,7 +10,6 @@ class Position:
         self.cur_equity = order.equity
         self.avg_quote = order.init_quote
         self.cur_quote = order.cur_quote
-        self.shares = order.shares
         self.dividend = 0
         self.split = 1
         self.diff = 0
