@@ -116,13 +116,12 @@ class Portfolio:
         self.watch_list = {}
         self.orders = []
         self.history = {}
-        self.funds = 0
+        self.funds = 9500
         self.diff = 0
         self.total_equity = 0
 
         self.equity_history = []
         self.equity_times = []
-
 
     def add_to_history(self, history_type, message, ticker, order=None, position=None):
         """
@@ -414,35 +413,68 @@ class Portfolio:
 
     #         position.update()
     #         self.total_equity += position.cur_equity
+    # def new_add_position(self, order):
+    #     # REFACTORING EVERYTHING
+    #     new_position = Position(order)
+    #     quote = self.env.get_quote(new_position.ticker)
+    #     if quote['open'] and quote['close']:
+    #         new_position.cur_quote = (quote['open'] + quote['close']) / 2
+        
 
     def add_position(self, order):
-        if order.ticker in positions:
-            pos = self.positions[ticker]
-            curr_shares = pos.shares
-            new_shares = order.shares
-            delta = curr_shares - new_shares
+        # SECOND TIME IT IS IN
+        if order.ticker in self.positions:
+            position = Position(order)
+            pos = self.positions[order.ticker]
 
-            if delta > 0:
-                self.funds -= position.shares * position.cur_quote
-                pos = self.positions[ticker]
-                weight1 = position.avg_quote * position.shares
-                weight2 = pos.avg_quote * pos.shares
-                total_shares = position.shares + pos.shares
+            quote = self.env.get_quote(order.ticker)
+            if quote['open'] and quote['close']:
+                position.cur_quote = (quote['open'] + quote['close']) / 2
 
-                pos.shares = total_shares
-                pos.avg_quote = (weight1 + weight2) / total_shares
-                pos.init_equity = (weight1 + weight2)
-            elif delta < 0:
+            if order.buy:
+                cost = position.cur_quote * position.shares
+                print("BEFORE")
+                print(cost, self.funds)
+                if cost < self.funds:
+                    weight1 = position.avg_quote * position.shares
+                    weight2 = pos.avg_quote * pos.shares
+                    total_shares = position.shares + pos.shares
+
+                    pos.shares = total_shares
+                    pos.avg_quote = (weight1 + weight2) / total_shares
+                    pos.init_equity = (weight1 + weight2)
+
+                    self.funds -= cost
+                print("AFTER")
+                print(self.funds, cost)
+            else:
                 if position.shares <= pos.shares:
-                    self.orders.pop(index)
                     self.funds += position.shares * position.cur_quote
                     pos.shares -= position.shares
-                    if pos.shares == 0:
-                        del self.positions[ticker]
 
         else:
-            positions[order.ticker] = Position(order)
-        self.add_to_history(HistoryType.EXCHANGE_ORDER, 'Order Exchanged', order.ticker, order=order)
+            self.positions[order.ticker] = Position(order)
+            curr_pos = self.positions[order.ticker]
+
+            quote = self.env.get_quote(curr_pos.ticker)
+            if quote['open'] and quote['close']:
+                curr_pos.cur_quote = (quote['open'] + quote['close']) / 2
+            print("FIRST")
+            print(self.funds)
+            if order.buy:
+                cost = curr_pos.cur_quote * curr_pos.shares
+                print("BUYING")                
+                if cost < self.funds:
+                    self.funds -= cost
+                else:
+                    curr_pos.shares = 0
+                print(self.funds, cost)
+        for i in self.positions.values():
+            print(self.env.get_time(), i.ticker, i.shares, i.cur_quote)
+        print("This is the funds I have now: {}".format(self.funds))
+        print("This is the equity I have now: {}".format(self.total_equity))
+
+        # self.add_to_history(HistoryType.EXCHANGE_ORDER, 'Order Exchanged', order.ticker, order=order)
 
     def update(self):
         current_equity = 0
@@ -452,12 +484,12 @@ class Portfolio:
             if quote['open'] and quote['close']:
                 price = (quote['open'] + quote['close']) / 2
             else:
-                price = 0
+                price = position.cur_quote
             equity = position.shares * price
             current_equity += equity
             position.cur_quote = price
 
         time = self.env.get_time()
         self.equity_times.append(time)
-        self.equity_history.append(current_value)
-        return current_value
+        self.total_equity = self.funds + current_equity
+        self.equity_history.append(self.total_equity)

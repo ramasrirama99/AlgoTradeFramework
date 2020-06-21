@@ -65,7 +65,17 @@ class HistoricalData:
                 timestamp in self.tickers[ticker] and \
                 attribute in self.tickers[ticker][timestamp]:
             return self.tickers[ticker][timestamp][attribute]
-        return None
+        # data = db.get_data_timestamp(self.conn, 'data_intraday_%s' % ticker, timestamp)
+        # columns = ('timestamp',
+        #                 'open',
+        #                 'high',
+        #                 'low',
+        #                 'close',
+        #                 'volume')
+        # if data:
+        #     return data[0][columns.index(attribute)]
+        # return None
+
 
     def get_data_interval(self, ticker, timestamp1, timestamp2, attribute, interval):
         """
