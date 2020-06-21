@@ -46,7 +46,31 @@ class Interval(Enum):
     WEEK = 8
     MONTH = 9
     YEAR = 10
-    ALL = 11
+    ASAP = 11
+    ALL = 12
+
+    def to_timedelta(interval):
+        if interval is Interval.MINUTE1:
+            return timedelta(minutes=1)
+        elif interval is Interval.MINUTE1:
+            return timedelta(minutes=5)
+        elif interval is Interval.MINUTE1:
+            return timedelta(minutes=10)
+        elif interval is Interval.MINUTE1:
+            return timedelta(minutes=15)
+        elif interval is Interval.MINUTE1:
+            return timedelta(minutes=30)
+        elif interval is Interval.MINUTE1:
+            return timedelta(hours=1)
+        elif interval is Interval.MINUTE1:
+            return timedelta(days=1)
+        elif interval is Interval.MINUTE1:
+            return timedelta(weeks=1)
+        elif interval is Interval.MINUTE1:
+            return timedelta(years=1)
+        else:
+            print('Invalid Interval: %d\n' % interval)
+
 
 
 class HistoryInstance:
@@ -92,9 +116,12 @@ class Portfolio:
         self.watch_list = {}
         self.orders = []
         self.history = {}
-        self.funds = 0
+        self.funds = 9500
         self.diff = 0
         self.total_equity = 0
+
+        self.equity_history = []
+        self.equity_times = []
 
     def add_to_history(self, history_type, message, ticker, order=None, position=None):
         """
@@ -360,29 +387,136 @@ class Portfolio:
         if ticker in self.watch_list:
             del self.watch_list[ticker]
 
-    def update(self):
-        """
-        Updates all the orders and positions in portfolio
-        """
+    # def update(self):
+    #     """
+    #     Updates all the orders and positions in portfolio
+    #     """
 
-        orders = self.orders.copy()
-        for i, order in enumerate(orders):
-            if TIME.timestamp > order.time_expire:
-                self.expire(i, order)
+    #     orders = self.orders.copy()
+    #     for i, order in enumerate(orders):
+    #         if TIME.timestamp > order.time_expire:
+    #             self.expire(i, order)
+    #         else:
+    #             execute = order.update()
+    #             if execute and order.buy:
+    #                 position = Position(order)
+    #                 self.buy_position(i, order, position)
+    #             elif execute:
+    #                 position = Position(order)
+    #                 self.sell_position(i, order, position)
+    #     self.total_equity = self.funds
+
+    #     for ticker, position in self.positions.items():
+    #         position.update_special()
+    #         self.calc_split(ticker)
+    #         self.calc_dividends(ticker)
+
+    #         position.update()
+    #         self.total_equity += position.cur_equity
+    def add_position(self, order):
+        # REFACTORING EVERYTHING
+        seen_ticker = True
+        if order.ticker not in self.positions:
+            self.positions[order.ticker] = Position(order)
+            self.positions[order.ticker].shares = 0
+            seen_ticker = False
+
+        prev_position = self.positions[order.ticker]
+            
+        quote = self.env.get_quote(order.ticker)
+        curr_price = 0
+
+        if quote['open'] and quote['close']:
+            curr_price = (quote['open'] + quote['close']) / 2
+        else:
+            if seen_ticker:
+                curr_price = prev_position.cur_quote
             else:
-                execute = order.update()
-                if execute and order.buy:
-                    position = Position(order)
-                    self.buy_position(i, order, position)
-                elif execute:
-                    position = Position(order)
-                    self.sell_position(i, order, position)
-        self.total_equity = self.funds
+                print("Invalid date")
+                return
 
+        cost = curr_price * order.shares
+        if order.buy:
+            if cost < self.funds:
+                total_shares = order.shares + prev_position.shares
+                prev_position.shares = total_shares
+                prev_position.cur_quote = curr_price
+                self.funds -= cost
+        else:
+            if order.shares <= prev_position.shares:
+                self.funds += cost
+                prev_position.shares -= order.shares
+
+    def old_add_position(self, order):
+        # SECOND TIME IT IS IN
+        if order.ticker in self.positions:
+            position = Position(order)
+            pos = self.positions[order.ticker]
+
+            quote = self.env.get_quote(order.ticker)
+            if quote['open'] and quote['close']:
+                position.cur_quote = (quote['open'] + quote['close']) / 2
+            else:
+                position.cur_quote = pos.cur_quote
+            if order.buy:
+                cost = position.cur_quote * position.shares
+                print("BEFORE")
+                print(cost, self.funds)
+                if cost < self.funds:
+                    weight1 = position.avg_quote * position.shares
+                    weight2 = pos.avg_quote * pos.shares
+                    total_shares = position.shares + pos.shares
+
+                    pos.shares = total_shares
+                    pos.avg_quote = (weight1 + weight2) / total_shares
+                    pos.init_equity = (weight1 + weight2)
+
+                    self.funds -= cost
+                print("AFTER")
+                print(self.funds, cost)
+            else:
+                if position.shares <= pos.shares:
+                    self.funds += position.shares * position.cur_quote
+                    pos.shares -= position.shares
+
+        else:
+            self.positions[order.ticker] = Position(order)
+            curr_pos = self.positions[order.ticker]
+
+            quote = self.env.get_quote(curr_pos.ticker)
+            if quote['open'] and quote['close']:
+                curr_pos.cur_quote = (quote['open'] + quote['close']) / 2
+            print("FIRST")
+            print(self.funds)
+            if order.buy:
+                cost = curr_pos.cur_quote * curr_pos.shares
+                print("BUYING")                
+                if cost < self.funds:
+                    self.funds -= cost
+                else:
+                    curr_pos.shares = 0
+                print(self.funds, cost)
+        for i in self.positions.values():
+            print(self.env.get_time(), i.ticker, i.shares, i.cur_quote)
+        print("This is the funds I have now: {}".format(self.funds))
+        print("This is the equity I have now: {}".format(self.total_equity))
+
+        # self.add_to_history(HistoryType.EXCHANGE_ORDER, 'Order Exchanged', order.ticker, order=order)
+
+    def update(self):
+        current_equity = 0
         for ticker, position in self.positions.items():
-            position.update_special()
-            self.calc_split(ticker)
-            self.calc_dividends(ticker)
+            quote = self.env.get_quote(ticker)
+            # val = eval_quote(quote)
+            if quote['open'] and quote['close']:
+                price = (quote['open'] + quote['close']) / 2
+            else:
+                price = position.cur_quote
+            equity = position.shares * price
+            current_equity += equity
+            position.cur_quote = price
 
-            position.update()
-            self.total_equity += position.cur_equity
+        time = self.env.get_time()
+        self.equity_times.append(time)
+        self.total_equity = self.funds + current_equity
+        self.equity_history.append(self.total_equity)

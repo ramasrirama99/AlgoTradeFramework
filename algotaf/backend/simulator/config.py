@@ -7,7 +7,7 @@ TICKERS_SHORT = ['aapl', 'amzn', 'msft', 'amd', 'nvda', 'goog', 'baba', 'fitb', 
                  'bp', 'unh', 'cvs', 'tpr']
 
 DATA = HistoricalData()
-DATA.populate_data(TICKERS_SHORT)
+# DATA.populate_data(TICKERS_SHORT)
 INTERVAL = timedelta(minutes=1)
 DAY_INTERVAL = timedelta(days=1)
 TIME = TimeSimulator(datetime(2019, 8, 6, 0, 0, 0))
