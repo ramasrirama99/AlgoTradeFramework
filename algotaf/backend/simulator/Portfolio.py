@@ -413,21 +413,41 @@ class Portfolio:
 
     #         position.update()
     #         self.total_equity += position.cur_equity
-    # def new_add_position(self, order):
-    #     # REFACTORING EVERYTHING
-    #     new_position = Position(order)
-    #     if order.ticker in self.positions:
-    #         prev_position = self.positions[order.ticker]
-    #     else:
-    #         prev_position = 
-    #     quote = self.env.get_quote(new_position.ticker)
-    #     if quote['open'] and quote['close']:
-    #         new_position.cur_quote = (quote['open'] + quote['close']) / 2
-
-    #     if order.buy:
-    #         cost = new_position.cur_quote * new_position.shares
-
     def add_position(self, order):
+        # REFACTORING EVERYTHING
+        seen_ticker = True
+        if order.ticker not in self.positions:
+            self.positions[order.ticker] = Position(order)
+            seen_ticker = False
+
+        prev_position = self.positions[order.ticker]
+            
+        quote = self.env.get_quote(order.ticker)
+        curr_price = 0
+
+        if quote['open'] and quote['close']:
+            curr_price = (quote['open'] + quote['close']) / 2
+        else:
+            if seen_ticker:
+                curr_price = prev_position.cur_quote
+            else:
+                print("Invalid date")
+                return
+
+        cost = curr_price * order.shares
+        if order.buy:
+            if cost < self.funds:
+                total_shares = order.shares + prev_position.shares
+                if seen_ticker:
+                    prev_position.shares = total_shares
+                prev_position.cur_quote = curr_price
+                self.funds -= cost
+        else:
+            if order.shares <= prev_position.shares:
+                self.funds += cost
+                prev_position.shares -= order.shares
+
+    def old_add_position(self, order):
         # SECOND TIME IT IS IN
         if order.ticker in self.positions:
             position = Position(order)
