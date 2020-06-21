@@ -1,5 +1,5 @@
 from datetime import datetime
-from algotaf.backend.simulator.config import TIME, INTERVAL
+from algotaf.backend.simulator.config import TIME, INTERVAL, DATA
 from algotaf.backend.simulator.Portfolio import Portfolio, Interval
 from algotaf.backend.simulator.Order import Order
 from algotaf.other.benchmark import Benchmark
@@ -80,10 +80,15 @@ class TestStrategy():
             timestamp5: [order5], timestamp6: [order6, order10], timestamp7: [order7], timestamp8: [order8],
             timestamp9: [order9]}
 
-    def get_orders():
+    def get_orders(self):
+        print(self.decision_list)
         curr_time = self.env.get_time()
+        orders = []
         if curr_time in self.decision_list:
-            return [self.decision_list[curr_time]], Interval.DAY
+            for i in self.decision_list[curr_time]:
+                orders.append(i)
+
+        return orders, Interval.MINUTE1
 
 
 class Backtester(StrategyEnvironment):
@@ -91,26 +96,29 @@ class Backtester(StrategyEnvironment):
         self.start_time = start_time
         self.end_time = end_time
         self.curr_time = start_time
+        self.portfolio = portfolio
+        self.strategy = strategy
 
         if strategy is None:
             print("strategy is None\n")
         else:
-            strategy.env = self
-            portfolio.env = self
+            self.strategy.env = self
+            self.portfolio.env = self
 
     def run(self):
-        while curr_time < end_time:
-            tick()
+        while self.curr_time < self.end_time:
+            self.tick()
 
     def tick(self):
-        portfolio.update(self.curr_time)
-        orders, interval = strategy.get_orders()
+        self.portfolio.update()
+        orders, interval = self.strategy.get_orders()
         for order in orders:
-            portfolio.add_position(order)
+            self.portfolio.add_position(order)
 
-        if interval < ASAP:
-            self.curr_time += interval.to_datetime()
+        if interval != Interval.ASAP and interval != Interval.ALL:
+            self.curr_time += Interval.to_timedelta(interval)
         else:
+            print('Invalid interval\n')
             exit()
 
     def get_quote(self, ticker, timestamp=None):
@@ -118,12 +126,13 @@ class Backtester(StrategyEnvironment):
             timestamp = self.curr_time
 
         quote = {}
-        quote['open'] = DATA.get_data(self.ticker, timestamp, 'open')
-        quote['high'] = DATA.get_data(self.ticker, timestamp, 'high')
-        quote['low'] = DATA.get_data(self.ticker, timestamp, 'low')
-        quote['close'] = DATA.get_data(self.ticker, timestamp, 'close')
-        quote['volume'] = DATA.get_data(self.ticker, timestamp, 'volume')
-
+        quote['open'] = DATA.get_data(ticker, timestamp, 'open')
+        quote['high'] = DATA.get_data(ticker, timestamp, 'high')
+        quote['low'] = DATA.get_data(ticker, timestamp, 'low')
+        quote['close'] = DATA.get_data(ticker, timestamp, 'close')
+        quote['volume'] = DATA.get_data(ticker, timestamp, 'volume')
+        print(timestamp)
+        
         return quote
 
     def get_time(self):
@@ -153,6 +162,7 @@ def main():
     strat = TestStrategy()
     portfolio = Portfolio('test')
     env = Backtester(strat, portfolio, start_time=datetime(2019, 8, 6, 0, 0, 0), end_time=datetime(2019, 8, 23, 20, 0, 0))
+    env.run()
 
 
 if __name__ == '__main__':

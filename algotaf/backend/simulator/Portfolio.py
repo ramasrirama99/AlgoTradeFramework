@@ -420,7 +420,7 @@ class Portfolio:
         for ticker, position in self.positions.items():
             quote = self.env.get_quote(ticker)
             # val = eval_quote(quote)
-            if quote:
+            if quote['open']:
                 val = (quote['open'] + quote['close']) / 2
             else:
                 val = 0
