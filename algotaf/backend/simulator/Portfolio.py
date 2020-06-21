@@ -416,10 +416,16 @@ class Portfolio:
     # def new_add_position(self, order):
     #     # REFACTORING EVERYTHING
     #     new_position = Position(order)
+    #     if order.ticker in self.positions:
+    #         prev_position = self.positions[order.ticker]
+    #     else:
+    #         prev_position = 
     #     quote = self.env.get_quote(new_position.ticker)
     #     if quote['open'] and quote['close']:
     #         new_position.cur_quote = (quote['open'] + quote['close']) / 2
-        
+
+    #     if order.buy:
+    #         cost = new_position.cur_quote * new_position.shares
 
     def add_position(self, order):
         # SECOND TIME IT IS IN
@@ -430,7 +436,8 @@ class Portfolio:
             quote = self.env.get_quote(order.ticker)
             if quote['open'] and quote['close']:
                 position.cur_quote = (quote['open'] + quote['close']) / 2
-
+            else:
+                position.cur_quote = pos.cur_quote
             if order.buy:
                 cost = position.cur_quote * position.shares
                 print("BEFORE")

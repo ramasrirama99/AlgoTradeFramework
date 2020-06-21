@@ -162,7 +162,7 @@ def main():
     env = Backtester(strat, portfolio, start_time=datetime(2019, 8, 6, 0, 0, 0), end_time=datetime(2019, 8, 23, 20, 0, 0))
     env.run()
 
-    plt.plot(portfolio.equity_times, portfolio.equity_history, marker='o')
+    plt.plot(portfolio.equity_times, portfolio.equity_history)
     plt.xlabel('timestamps')
     plt.ylabel('Portfolio equity')
     plt.show()
