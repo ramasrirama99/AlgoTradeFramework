@@ -120,6 +120,9 @@ class Portfolio:
         self.diff = 0
         self.total_equity = 0
 
+        self.equity_history = []
+        self.equity_times = []
+
 
     def add_to_history(self, history_type, message, ticker, order=None, position=None):
         """
@@ -413,17 +416,48 @@ class Portfolio:
     #         self.total_equity += position.cur_equity
 
     def add_position(self, order):
-        self.positions[order.ticker] = Position(order)
+        if order.ticker in positions:
+            pos = self.positions[ticker]
+            curr_shares = pos.shares
+            new_shares = order.shares
+            delta = curr_shares - new_shares
+
+            if delta > 0:
+                self.funds -= position.shares * position.cur_quote
+                pos = self.positions[ticker]
+                weight1 = position.avg_quote * position.shares
+                weight2 = pos.avg_quote * pos.shares
+                total_shares = position.shares + pos.shares
+
+                pos.shares = total_shares
+                pos.avg_quote = (weight1 + weight2) / total_shares
+                pos.init_equity = (weight1 + weight2)
+            elif delta < 0:
+                if position.shares <= pos.shares:
+                    self.orders.pop(index)
+                    self.funds += position.shares * position.cur_quote
+                    pos.shares -= position.shares
+                    if pos.shares == 0:
+                        del self.positions[ticker]
+
+        else:
+            positions[order.ticker] = Position(order)
+        self.add_to_history(HistoryType.EXCHANGE_ORDER, 'Order Exchanged', order.ticker, order=order)
 
     def update(self):
-        current_value = self.funds
+        current_equity = 0
         for ticker, position in self.positions.items():
             quote = self.env.get_quote(ticker)
             # val = eval_quote(quote)
-            if quote:
-                val = (quote['open'] + quote['close']) / 2
+            if quote['open'] and quote['close']:
+                price = (quote['open'] + quote['close']) / 2
             else:
-                val = 0
-            current_value += val
-            position.cur_quote = val
+                price = 0
+            equity = position.shares * price
+            current_equity += equity
+            position.cur_quote = price
+
+        time = self.env.get_time()
+        self.equity_times.append(time)
+        self.equity_history.append(current_value)
         return current_value

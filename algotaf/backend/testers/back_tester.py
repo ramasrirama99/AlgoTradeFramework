@@ -4,6 +4,7 @@ from algotaf.backend.simulator.Portfolio import Portfolio, Interval
 from algotaf.backend.simulator.Order import Order
 from algotaf.other.benchmark import Benchmark
 from algotaf.backend.testers.tester import StrategyEnvironment
+import matplotlib.pyplot as plt
 
 BENCH = Benchmark()
 
@@ -91,22 +92,24 @@ class Backtester(StrategyEnvironment):
         self.start_time = start_time
         self.end_time = end_time
         self.curr_time = start_time
+        self.strategy = strategy
+        self.portfolio = portfolio
 
-        if strategy is None:
+        if self.strategy is None:
             print("strategy is None\n")
         else:
-            strategy.env = self
-            portfolio.env = self
+            self.strategy.env = self
+            self.portfolio.env = self
 
     def run(self):
-        while curr_time < end_time:
-            tick()
+        while self.curr_time < self.end_time:
+            self.tick()
 
     def tick(self):
-        portfolio.update(self.curr_time)
-        orders, interval = strategy.get_orders()
+        self.portfolio.update(self.curr_time)
+        orders, interval = self.strategy.get_orders()
         for order in orders:
-            portfolio.add_position(order)
+            self.portfolio.add_position(order)
 
         if interval < ASAP:
             self.curr_time += interval.to_datetime()
@@ -153,6 +156,8 @@ def main():
     strat = TestStrategy()
     portfolio = Portfolio('test')
     env = Backtester(strat, portfolio, start_time=datetime(2019, 8, 6, 0, 0, 0), end_time=datetime(2019, 8, 23, 20, 0, 0))
+    env.run()
+    plt.plot(portfolio.equity_times, portfolio.equity_history)
 
 
 if __name__ == '__main__':
