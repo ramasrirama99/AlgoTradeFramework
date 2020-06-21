@@ -418,6 +418,7 @@ class Portfolio:
         seen_ticker = True
         if order.ticker not in self.positions:
             self.positions[order.ticker] = Position(order)
+            self.positions[order.ticker].shares = 0
             seen_ticker = False
 
         prev_position = self.positions[order.ticker]
@@ -438,8 +439,7 @@ class Portfolio:
         if order.buy:
             if cost < self.funds:
                 total_shares = order.shares + prev_position.shares
-                if seen_ticker:
-                    prev_position.shares = total_shares
+                prev_position.shares = total_shares
                 prev_position.cur_quote = curr_price
                 self.funds -= cost
         else:
