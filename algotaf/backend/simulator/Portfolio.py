@@ -120,6 +120,7 @@ class Portfolio:
         self.diff = 0
         self.total_equity = 0
 
+
     def add_to_history(self, history_type, message, ticker, order=None, position=None):
         """
         Creates and adds an instance to history
@@ -420,8 +421,7 @@ class Portfolio:
             quote = self.env.get_quote(ticker)
             # val = eval_quote(quote)
             if quote:
-                val = sum([i for i in quote.values()])
-                val /= len(quote)
+                val = (quote['open'] + quote['close']) / 2
             else:
                 val = 0
             current_value += val
