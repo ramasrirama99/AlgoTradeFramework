@@ -1,6 +1,7 @@
 import psycopg2
 from algotaf.backend.db import db_wrapper as db
 from algotaf.backend import config
+from datetime import datetime, timedelta
 
 
 class HistoricalData:
@@ -14,6 +15,7 @@ class HistoricalData:
                                      password=config.PASSWORD,
                                      host=config.HOSTNAME)
         self.tickers = {}
+        self.tickers_latest_time = {}
 
     def populate_data(self, tickers):
         """
@@ -52,6 +54,38 @@ class HistoricalData:
                 for i, col in enumerate(row[1:]):
                     self.tickers[ticker][row[0]][columns[i]] = col
 
+    def populate_data_timeframe(self, tickers, start_date, end_date):
+        for ticker in tickers:
+            self.tickers[ticker] = {}
+
+            table_name = 'data_daily_%s' % ticker
+            raw_data = db.get_data_interval(self.conn, table_name, start_date, end_date)
+            columns = ('open',
+                       'high',
+                       'low',
+                       'close',
+                       'adjusted_close',
+                       'volume',
+                       'dividend_amount',
+                       'split_coefficient')
+
+            for row in raw_data:
+                self.tickers[ticker][row[0]] = {}
+                for i, col in enumerate(row[1:]):
+                    self.tickers[ticker][row[0]][columns[i]] = col
+
+            table_name = 'data_intraday_%s' % ticker
+            raw_data = db.get_data_interval(self.conn, table_name, start_date, end_date)
+            columns = ('open',
+                       'high',
+                       'low',
+                       'close',
+                       'volume')
+            for row in raw_data:
+                self.tickers[ticker][row[0]] = {}
+                for i, col in enumerate(row[1:]):
+                    self.tickers[ticker][row[0]][columns[i]] = col
+
     def get_data(self, ticker, timestamp, attribute):
         """
         Gets the data for a ticker at a timestamp for an attribute
@@ -61,20 +95,16 @@ class HistoricalData:
         :return: Data or None
         """
 
+        if ticker not in self.tickers_latest_time or timestamp > self.tickers_latest_time[ticker]:
+            self.populate_data_timeframe([ticker], timestamp, timestamp + timedelta(days=1))
+            self.tickers_latest_time[ticker] = timestamp + timedelta(days=1)
+
         if ticker in self.tickers and \
                 timestamp in self.tickers[ticker] and \
                 attribute in self.tickers[ticker][timestamp]:
             return self.tickers[ticker][timestamp][attribute]
-        # data = db.get_data_timestamp(self.conn, 'data_intraday_%s' % ticker, timestamp)
-        # columns = ('timestamp',
-        #                 'open',
-        #                 'high',
-        #                 'low',
-        #                 'close',
-        #                 'volume')
-        # if data:
-        #     return data[0][columns.index(attribute)]
-        # return None
+
+        return None
 
 
     def get_data_interval(self, ticker, timestamp1, timestamp2, attribute, interval):
