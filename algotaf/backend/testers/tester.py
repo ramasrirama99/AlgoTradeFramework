@@ -4,6 +4,7 @@ class StrategyEnvironment(ABC):
 	def __init__(self, strategy, portfolio):
 		self.strategy = strategy
 		self.portfolio = portfolio
+		self.strategy.set_up()
 
 	@abstractmethod
 	def run(self):

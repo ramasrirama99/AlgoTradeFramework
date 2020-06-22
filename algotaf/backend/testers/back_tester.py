@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from algotaf.backend.simulator.config import TIME, INTERVAL, DATA
 from algotaf.backend.simulator.Portfolio import Portfolio, Interval
 from algotaf.backend.simulator.Order import Order
@@ -98,21 +98,21 @@ class Backtester(StrategyEnvironment):
         self.portfolio = portfolio
         self.strategy = strategy
 
-        if strategy is None:
-            print("strategy is None\n")
-        else:
-            self.strategy.env = self
-            self.portfolio.env = self
+        self.strategy.env = self
+        self.portfolio.env = self
 
     def run(self):
         while self.curr_time < self.end_time:
             self.tick()
 
     def tick(self):
-        self.portfolio.update()
-        orders, interval = self.strategy.get_orders()
-        for order in orders:
-            self.portfolio.add_position(order)
+        if self.get_quote('amzn')['open'] != None:
+            self.portfolio.update()
+            orders, interval = self.strategy.get_orders()
+            for order in orders:
+                self.portfolio.add_position(order)
+        else:
+            interval = Interval.MINUTE1
 
         if interval != Interval.ASAP and interval != Interval.ALL:
             self.curr_time += Interval.to_timedelta(interval)
@@ -120,18 +120,37 @@ class Backtester(StrategyEnvironment):
             print('Invalid interval\n')
             exit()
 
-    def get_quote(self, ticker, timestamp=None):
+    def get_quote(self, ticker, timestamp=None, daily=False):
         if timestamp is None:
             timestamp = self.curr_time
 
+        if timestamp > self.curr_time:
+            print('Request of future data\n')
+
         quote = {}
-        quote['open'] = DATA.get_data(ticker, timestamp, 'open')
-        quote['high'] = DATA.get_data(ticker, timestamp, 'high')
-        quote['low'] = DATA.get_data(ticker, timestamp, 'low')
-        quote['close'] = DATA.get_data(ticker, timestamp, 'close')
-        quote['volume'] = DATA.get_data(ticker, timestamp, 'volume')
+        quote['open'] = DATA.get_data(ticker, timestamp, 'open', daily)
+        quote['high'] = DATA.get_data(ticker, timestamp, 'high', daily)
+        quote['low'] = DATA.get_data(ticker, timestamp, 'low', daily)
+        quote['close'] = DATA.get_data(ticker, timestamp, 'close', daily)
+        quote['volume'] = DATA.get_data(ticker, timestamp, 'volume', daily)
         
         return quote
+
+    def get_quote_interval(self, ticker, start_date, end_date, daily=True):
+        quotes = []
+        if daily:
+            num_intervals = (end_date - start_date).days
+            interval = Interval.DAY
+        else:
+            num_intervals = (end_date - start_date).minutes
+            interval = Interval.MINUTE1
+
+        time_range = [start_date + Interval.to_timedelta(interval)*x for x in range(num_intervals)]
+
+        for time in time_range:
+            quotes.append(self.get_quote(ticker, timestamp=time, daily=daily))
+
+        return quotes
 
     def get_time(self):
         return self.curr_time
@@ -159,7 +178,7 @@ def main():
     #         # BENCH.mark()
     strat = TestStrategy()
     portfolio = Portfolio('test')
-    env = Backtester(strat, portfolio, start_time=datetime(2019, 8, 6, 0, 0, 0), end_time=datetime(2019, 8, 23, 20, 0, 0))
+    env = Backtester(strat, portfolio, start_time=datetime(2019, 7, 6, 0, 0, 0), end_time=datetime(2019, 8, 23, 20, 0, 0))
     env.run()
 
     plt.plot(portfolio.equity_times, portfolio.equity_history)
