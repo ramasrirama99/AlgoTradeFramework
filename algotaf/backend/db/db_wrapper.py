@@ -26,7 +26,7 @@ def get_data_interval(conn, table_name, start_date, end_date, pandas=False):
     data = cur.fetchall()
     cur.close()
     if pandas:
-        data = pd.DataFrame.from_records(data, columns = ['timestamp', 'open', 'high', 'low', 'close', 'adjusted_close', 'volume', 'dividend', 'split'])
+        data = pd.DataFrame.from_records(data, columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume', 'dividend', 'split'])
     return data
 
 
@@ -82,7 +82,7 @@ def connect():
     Connects to database
     :return: Psycopg2 connection
     """
-    conn = psycopg2.connect(dbname='algotaf',
+    conn = psycopg2.connect(dbname=config.DB_NAME,
                         user=config.USERNAME,
                         password=config.PASSWORD,
                         host=config.HOSTNAME)
@@ -90,7 +90,7 @@ def connect():
 
 
 def main():
-    conn = psycopg2.connect(dbname='algotaf',
+    conn = psycopg2.connect(dbname=config.DB_NAME,
                             user=config.USERNAME,
                             password=config.PASSWORD,
                             host=config.HOSTNAME)

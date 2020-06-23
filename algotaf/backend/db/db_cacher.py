@@ -2,12 +2,14 @@ import psycopg2
 import time
 import requests
 import sys
+from datetime import datetime
 from pgcopy import CopyManager, Replace
 from psycopg2.sql import SQL, Identifier
 from time import sleep
 from algotaf.backend.apis import api_interactor as api
 from algotaf.backend import config
 from algotaf.other.benchmark import Benchmark
+from algotaf.backend.db import db_wrapper
 
 BACKUP = False
 BENCH = Benchmark()
@@ -144,11 +146,10 @@ def store_data(conn, cur, backup_conn, columns, table_name, query, data):
         backup_conn.commit()
 
     BENCH.mark('Commit connections')
+    return
 
-    print('{message: <20}: Cached!\n'.format(message=table_name))
 
-
-def store_data_daily(conn, backup_conn, ticker_list):
+def store_data_daily(backup_conn, ticker_list):
     """
     Stores daily data for each ticker
     :param conn: AWS psycopg2 connection
@@ -156,7 +157,7 @@ def store_data_daily(conn, backup_conn, ticker_list):
     :param ticker_list: List of tickers for API calls
     :param calls_per_minute: Max limit API calls per minute
     """
-
+    conn = db_wrapper.connect()
     cur = conn.cursor()
 
     columns = ('timestamp', 'open', 'high', 'low', 'close', 'volume', 'dividend_amount', 'split_coefficient')
@@ -165,82 +166,38 @@ def store_data_daily(conn, backup_conn, ticker_list):
         table_name = 'data_daily_' + ticker.lower()
 
         query = SQL('CREATE TABLE IF NOT EXISTS {} (timestamp date, open float(8), high float(8), low float(8), \
-            close float(8), volume float(8), dividend_amount float(8), \
-            split_coefficient float(8));')
+            close float(8), volume float(8), dividend_amount float(8), split_coefficient float(8));')
 
         success = False
         BENCH.mark('API Call')
         while not success:
             try:
-                data_daily = api.get_daily_adjusted(ticker, 'tdameritrade')
+                data_daily = api.get_daily(ticker, 'alpaca')
+                data_dividend, data_splits = api.get_actions_alpaca(ticker)
                 success = True
             except requests.exceptions.ConnectionError:
-                print('ERROR: SLEEPING...')
+                print('API_ERROR: SLEEPING...')
                 sleep(1)
         BENCH.mark('API Call')
-        store_data(conn, cur, backup_conn, columns, table_name, query, data_daily)
 
-    cur.close()
-
-
-def store_data_daily_bulk(conn, backup_conn, ticker_list):
-    """
-    Stores daily data for each ticker
-    :param conn: AWS psycopg2 connection
-    :param backup_conn: Backup psycopg2 connection
-    :param ticker_list: List of tickers for API calls
-    :param calls_per_minute: Max limit API calls per minute
-    """
-
-    cur = conn.cursor()
-
-    columns = ('timestamp', 'open', 'high', 'low', 'close', 'volume', 'dividend_amount',
-               'split_coefficient')
-    columns_dividend = ('timestamp', 'open', 'high', 'low', 'close', 'volume')
-    columns_split = ('timestamp', 'open', 'high', 'low', 'close', 'volume', 'split_coefficient')
-    columns_none = ('timestamp', 'open', 'high', 'low', 'close', 'volume')
-
-    partition = len(ticker_list) / 10
-    for i in range(0, 10):
-        start = int(i * partition)
-        end = int((i + 1) * partition)
-        if i == 9:
-            end = len(ticker_list)
-        cur_ticker_list = ticker_list[start : end]
-
-        BENCH.mark('API Call')
-        success = False
-        while not success:
+        connected = False
+        while not connected:
             try:
-                data_daily, actions = api.get_daily_adjusted(cur_ticker_list, 'yfinance', bulk=True)
-                success = True
-            except requests.exceptions.ConnectionError:
-                print('ERROR: SLEEPING...')
-                sleep(1)
-        BENCH.mark('API Call')
-        for j, stock in enumerate(data_daily):
-            table_name = 'data_daily_' + cur_ticker_list[j].lower()
-
-            query = SQL('CREATE TABLE IF NOT EXISTS {} (timestamp date, open float(8), high float(8), low float(8), \
-                close float(8), volume float(8), dividend_amount float(8), \
-                split_coefficient float(8));')
-
-            if actions[j] == None:
                 store_data(conn, cur, backup_conn, columns, table_name, query, data_daily)
-            else:
-                if actions[j]['Dividends'] and actions[j]['Stock Splits']:
-                    store_data(conn, cur, backup_conn, columns, table_name, query, data_daily)
-                elif actions[j]['Dividends']:
-                    store_data(conn, cur, backup_conn, columns_dividend, table_name, query, data_daily)
-                elif actions[j]['Stock Splits']:
-                    store_data(conn, cur, backup_conn, columns_split, table_name, query, data_daily)
-                else:
-                    store_data(conn, cur, backup_conn, columns_none, table_name, query, data_daily)
+                connected = True
+            except psycopg2.OperationalError:
+                print('DB_ERROR: RECONNECTING...')
+                sleep(1)
+                conn = db_wrapper.connect()
+                cur = conn.cursor()
+        print('{message: <20}: Cached!\n'.format(message=table_name))
 
+    conn.close()
     cur.close()
+    return
 
 
-def store_data_intraday(conn, backup_conn, ticker_list):
+def store_data_intraday(backup_conn, ticker_list):
     """
     Stores intraday data for each ticker
     :param conn: AWS psycopg2 connection
@@ -249,6 +206,7 @@ def store_data_intraday(conn, backup_conn, ticker_list):
     :param calls_per_minute: Max limit API calls per minute
     """
 
+    conn = db_wrapper.connect()
     cur = conn.cursor()
 
     columns = ('timestamp', 'open', 'high', 'low', 'close', 'volume')
@@ -266,36 +224,30 @@ def store_data_intraday(conn, backup_conn, ticker_list):
                 data_intraday = api.get_intraday(ticker, 'alpaca')
                 success = True
             except requests.exceptions.ConnectionError:
-                print('ERROR: SLEEPING...')
+                print('API_ERROR: SLEEPING...')
                 sleep(1)
         BENCH.mark('API Call')
-        store_data(conn, cur, backup_conn, columns, table_name, query, data_intraday)
 
+        connected = False
+        while not connected:
+            try:
+                store_data(conn, cur, backup_conn, columns, table_name, query, data_intraday)
+                connected = True
+            except psycopg2.OperationalError:
+                print('DB_ERROR: RECONNECTING...')
+                sleep(1)
+                conn = db_wrapper.connect()
+                cur = conn.cursor()
+        print('{message: <20}: Cached!\n'.format(message=table_name))
+
+    conn.close()
     cur.close()
-
-
-def schedule_jobs(conn, backup_conn, ticker_list):
-    for i in config.TIMES:
-        schedule.every().monday.at(i).do(store_data_intraday, conn, backup_conn, ticker_list, 0)
-        schedule.every().tuesday.at(i).do(store_data_intraday, conn, backup_conn, ticker_list, 0)
-        schedule.every().wednesday.at(i).do(store_data_intraday, conn, backup_conn, ticker_list, 0)
-        schedule.every().thursday.at(i).do(store_data_intraday, conn, backup_conn, ticker_list, 0)
-        schedule.every().friday.at(i).do(store_data_intraday, conn, backup_conn, ticker_list, 0)
-
-    schedule.every().monday.at('15:00').do(store_data_daily, conn, backup_conn, ticker_list, 0)
-    schedule.every().tuesday.at('15:00').do(store_data_daily, conn, backup_conn, ticker_list, 0)
-    schedule.every().wednesday.at('15:00').do(store_data_daily, conn, backup_conn, ticker_list, 0)
-    schedule.every().thursday.at('15:00').do(store_data_daily, conn, backup_conn, ticker_list, 0)
-    schedule.every().friday.at('15:00').do(store_data_daily, conn, backup_conn, ticker_list, 0)
+    return
 
 
 def main():
-    num = int(sys.argv[1])
     print()
-    conn = psycopg2.connect(dbname=config.DB_NAME,
-                            user=config.USERNAME,
-                            password=config.PASSWORD,
-                            host=config.HOSTNAME)
+    index = int(sys.argv[1])
 
     if BACKUP:
         backup_conn = psycopg2.connect(dbname=config.DB_NAME,
@@ -305,19 +257,11 @@ def main():
     else:
         backup_conn = None
 
-    ticker_list = config.TICKERS[num]
-    # ticker_list = ['aapl', 'amzn', 'msft', 'amd', 'nvda', 'goog', 'baba', 'fitb', 'mu', 'fb', 'sq', 'tsm', 'qcom', 'mo',
-    #                'bp', 'unh', 'cvs', 'tpr']
-    crypto_list = ['BTC', 'LTC', 'ETH']
+    ticker_list = config.ALL_TICKERS
+    ticker_list = ticker_list[ticker_list.index('CELH'):]
 
-    # schedule_jobs(conn, backup_conn, ticker_list)
-    # while True:
-    #     schedule.run_pending()
-    #     time.sleep(1)
-
-    store_data_intraday(conn, backup_conn, ticker_list)
-    store_data_daily(conn, backup_conn, ticker_list)
-    # store_data_daily_bulk(conn, backup_conn, ticker_list)
+    # store_data_intraday(backup_conn, ticker_list)
+    store_data_daily(backup_conn, ticker_list)
 
 
 if __name__ == '__main__':

@@ -63,20 +63,53 @@ def create_tuple_json(data, timestamp_type):
     return tuple_data_list
 
 
-def create_tuple_pandas(data):
+def create_tuple_alpaca(data, timestamp_type, dividends=None, splits=None):
     columns = data.columns
     tuple_data_list = []
     for i, record in data.iterrows():
         row = []
-        row.append(i.to_pydatetime())
+        if timestamp_type == 'date':
+            timestamp = i.to_pydatetime().date()
+            row.append(timestamp)
+        elif timestamp_type == 'datetime':
+            timestamp = i.to_pydatetime()
+            row.append(timestamp)
         for col in columns:
             if col in record:
                 row.append(record[col])
+        if timestamp_type == 'date':
+            if dividends and timestamp in dividends:
+                row.append(dividends[timestamp])
+            else:
+                row.append(0)
+            if splits and timestamp in splits:
+                row.append(splits[timestamp])
+            else:
+                row.append(1)
         tuple_data_list.append(tuple(row))
     return tuple_data_list
 
 
-def get_data_yfinance(parameters, bulk=False):
+def create_dict_actions(dividends, splits):
+    dividend_dict = {}
+    split_dict = {}
+
+    if dividends is not None:
+        for data in dividends:
+            payday = datetime.strptime(data._raw['paymentDate'], '%m/%d/%Y').date()
+            dividend_amount = data._raw['amount']
+            dividend_dict[payday] = dividend_amount
+
+    if splits is not None:
+        for data in splits:
+            payday = datetime.strptime(data._raw['paymentDate'], '%Y-%m-%d').date()
+            split_coefficient = 1 / data._raw['ratio']
+            split_dict[payday] = split_coefficient
+
+    return dividend_dict, split_dict
+
+
+def get_data_yfinance(parameters):
     data = yf.download(tickers=parameters['symbols'],
         period=parameters['period'],
         interval=parameters['interval'],
@@ -86,7 +119,7 @@ def get_data_yfinance(parameters, bulk=False):
         threads=parameters['threads'],
         proxy=parameters['proxy'],
         actions=parameters['actions'])
-    return create_tuple_pandas(data, parameters['interval'], bulk=bulk, tickers=parameters['symbols'])
+    return create_tuple_pandas(data, 'date')
 
 
 def get_data_alphavantage(parameters, timestamp_type):
@@ -137,16 +170,27 @@ def get_data_tdameritrade(parameters):
 
 
 def get_data_alpaca(parameters):
+    dividends = None
+    splits = None
     api = REST(alpaca_keys.APCA_API_KEY_ID, alpaca_keys.APCA_API_SECRET_KEY)
     data = api.get_aggs(parameters['symbol'],
            multiplier=parameters['multiplier'],
            timespan=parameters['timespan'],
            _from=parameters['_from'],
            to=parameters['to']).df
-    return create_tuple_pandas(data)
+    if parameters['timestamp_type'] == 'date':
+        dividends, splits = get_actions_alpaca(parameters['symbol'])
+    return create_tuple_alpaca(data, parameters['timestamp_type'], dividends=dividends, splits=splits)
 
 
-def get_daily_adjusted(symbol, api_name, bulk=False):
+def get_actions_alpaca(symbol):
+    api = REST(alpaca_keys.APCA_API_KEY_ID, alpaca_keys.APCA_API_SECRET_KEY)
+    dividend_data = api.polygon.dividends(symbol)
+    split_data = api.polygon.splits(symbol)
+    return create_dict_actions(dividend_data, split_data)
+
+
+def get_daily(symbol, api_name):
     """
     Get data from API call for daily data
     :param symbol: Symbol name
@@ -186,7 +230,17 @@ def get_daily_adjusted(symbol, api_name, bulk=False):
             'proxy': None,
             'actions': True,
         }
-        data = get_data_yfinance(parameters, bulk=bulk)
+        data = get_data_yfinance(parameters)
+    elif api_name == 'alpaca':
+        parameters = {
+            'symbol': symbol.upper(),
+            'multiplier': 1,
+            'timespan': 'day',
+            '_from': '1900-01-01',
+            'to': '2100-01-01',
+            'timestamp_type': 'date'
+        }
+        data = get_data_alpaca(parameters)
     return data
 
 
@@ -238,7 +292,8 @@ def get_intraday(symbol, api_name):
             'multiplier': 1,
             'timespan': 'minute',
             '_from': '2000-01-01',
-            'to': '2100-01-01'
+            'to': '2100-01-01',
+            'timestamp_type': 'datetime'
         }
         data = get_data_alpaca(parameters)
     return data
