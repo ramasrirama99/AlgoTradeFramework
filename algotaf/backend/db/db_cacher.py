@@ -257,10 +257,18 @@ def main():
     else:
         backup_conn = None
 
-    ticker_list = config.ALL_TICKERS
-    ticker_list = ticker_list[ticker_list.index('CELH'):]
+    # ticker_list = config.ALL_TICKERS
+    # ticker_list = ticker_list[ticker_list.index('CELH'):]
+    ticker_list = config.AMEX[index]
+    store_data_intraday(backup_conn, ticker_list)
+    store_data_daily(backup_conn, ticker_list)
 
-    # store_data_intraday(backup_conn, ticker_list)
+    ticker_list = config.NASDAQ[index]
+    store_data_intraday(backup_conn, ticker_list)
+    store_data_daily(backup_conn, ticker_list)
+
+    ticker_list = config.NYSE[index]
+    store_data_intraday(backup_conn, ticker_list)
     store_data_daily(backup_conn, ticker_list)
 
 

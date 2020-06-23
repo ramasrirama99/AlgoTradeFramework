@@ -2,8 +2,12 @@ from algotaf.backend.fileio import db_host, sensitive_data, nasdaq, amex, nyse
 
 
 def chunks(l, n):
+    big_list = []
     n = max(1, n)
-    return (l[i:i+n] for i in range(0, len(l), n))
+    step = int(len(l) / n)
+    for i in range(0, len(l), step):
+        big_list.append(l[i:i+n])
+    return big_list
 
 
 DB_NAME = 'algotaf'
