@@ -123,6 +123,9 @@ class Portfolio:
         self.equity_history = []
         self.equity_times = []
 
+        self.markers_buy = []
+        self.markers_sell = []
+
     def add_to_history(self, history_type, message, ticker, order=None, position=None):
         """
         Creates and adds an instance to history
@@ -442,10 +445,12 @@ class Portfolio:
                 prev_position.shares = total_shares
                 prev_position.cur_quote = curr_price
                 self.funds -= cost
+                self.markers_buy.append(len(self.equity_times))
         else:
             if order.shares <= prev_position.shares:
                 self.funds += cost
                 prev_position.shares -= order.shares
+                self.markers_sell.append(len(self.equity_times))
 
     def old_add_position(self, order):
         # SECOND TIME IT IS IN
