@@ -69,9 +69,11 @@ def get_data_timestamp(conn, table_name, timestamp, pandas=False):
     else:
         cur = conn.cursor()
 
-        cur.execute(SQL('SELECT * FROM {} WHERE timestamp = %s;')
+        try:
+            cur.execute(SQL('SELECT * FROM {} WHERE timestamp = %s;')
                     .format(Identifier(table_name)), (timestamp,))
-
+        except Exception:
+            return None
         data = cur.fetchall()
         cur.close()
     return data
