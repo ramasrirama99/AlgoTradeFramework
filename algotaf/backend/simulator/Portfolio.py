@@ -118,7 +118,7 @@ class Portfolio:
         self.watch_list = {}
         self.orders = []
         self.history = {}
-        self.funds = 25000
+        self.funds = 10000
         self.diff = 0
         self.total_equity = 0
 
@@ -426,7 +426,8 @@ class Portfolio:
         prev_position = self.positions[order.ticker]
         
         quote = self.env.get_quote(order.ticker)
-        curr_price = 0
+        if quote['open'] == None:
+            quote = self.env.get_quote(order.ticker, daily=True)
 
         if quote['open'] and quote['close']:
             curr_price = (quote['open'] + quote['close']) / 2
@@ -434,8 +435,8 @@ class Portfolio:
             if seen_ticker:
                 curr_price = prev_position.cur_quote
             else:
+                print(self.env.curr_time)
                 print("Invalid date")
-                exit()
                 return
 
         cost = curr_price * order.shares
@@ -510,6 +511,8 @@ class Portfolio:
         current_equity = 0
         for ticker, position in self.positions.items():
             quote = self.env.get_quote(ticker)
+            if quote['open'] == None:
+                quote = self.env.get_quote(ticker, daily=True)
             # val = eval_quote(quote)
             if quote['open'] and quote['close']:
                 price = (quote['open'] + quote['close']) / 2

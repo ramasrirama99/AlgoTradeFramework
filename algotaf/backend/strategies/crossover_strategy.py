@@ -15,8 +15,8 @@ class CrossoverStrategy(Strategy):
 	def __init__(self, short_period=50, long_period=200):
 		self.long_period = long_period
 		self.short_period = short_period
+		self.interval = Interval.DAY
 		self.is_bought = False
-		self.curr_date = None
 
 	def set_up(self):
 		self.curr_date = self.env.get_time().date()
@@ -31,36 +31,39 @@ class CrossoverStrategy(Strategy):
 	def get_orders(self):
 		curr_time = self.env.get_time()
 		if self.curr_date == curr_time.date():
-			return [], Interval.DAY
+			return []
+		self.curr_date = curr_time.date()
 
 		sma_short = self.get_sma(TEST_STOCK, self.short_period)
 		sma_long = self.get_sma(TEST_STOCK, self.long_period)
-		# print(curr_time)
-		# print('short - long: ', sma_short - sma_long)
 
-		quote = self.env.get_quote(TEST_STOCK)
+		quote = self.env.get_quote(TEST_STOCK, daily=True)
+		if quote['open'] is None:
+			return []
 		price = (quote['open'] + quote['close']) / 2
+		
 		if not self.is_bought and sma_short > sma_long:
 			print(curr_time.date())
 			print('short: ', sma_short)
 			print('long: ', sma_long)
-			print('buy at: ', price, '\n')
 			self.is_bought = True
-			return [Order(TEST_STOCK, curr_time, None, buy=True, limit=False, limit_price=0, shares=10)], Interval.DAY
+			self.num_shares = (self.env.get_portfolio().funds / price) / 2
+			print('buy %d shares at %f' % (self.num_shares, price), '\n')
+			return [Order(TEST_STOCK, curr_time, None, buy=True, limit=False, limit_price=0, shares=self.num_shares)]
 		elif self.is_bought and sma_long > sma_short:
 			print(curr_time.date())
 			print('short: ', sma_short)
 			print('long: ', sma_long)
-			print('sell at: ', price, '\n')
+			print('sell %d shares at %f' % (self.num_shares, price), '\n')
 			self.is_bought = False
-			return [Order(TEST_STOCK, curr_time, None, buy=False, limit=False, limit_price=0, shares=10)], Interval.DAY
+			return [Order(TEST_STOCK, curr_time, None, buy=False, limit=False, limit_price=0, shares=self.num_shares)]
 
-		return [], Interval.DAY
+		return []
 
 def main():
-    strat = CrossoverStrategy(short_period=75, long_period=400)
+    strat = CrossoverStrategy(short_period=40, long_period=200)
     portfolio = Portfolio('CrossoverStrategy')
-    env = Backtester(strat, portfolio, start_time=datetime(2016, 7, 8, 0, 0, 0), end_time=datetime(2019, 8, 23, 20, 0, 0))
+    env = Backtester(strat, portfolio, start_time=datetime(2000, 6, 10, 0, 0, 0), end_time=datetime(2019, 8, 23, 20, 0, 0))
     env.run()
 
     plt.plot(portfolio.equity_times, portfolio.equity_history)

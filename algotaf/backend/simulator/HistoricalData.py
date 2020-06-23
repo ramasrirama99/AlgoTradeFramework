@@ -33,7 +33,6 @@ class HistoricalData:
                        'high',
                        'low',
                        'close',
-                       'adjusted_close',
                        'volume',
                        'dividend_amount',
                        'split_coefficient')
@@ -67,7 +66,6 @@ class HistoricalData:
                        'high',
                        'low',
                        'close',
-                       'adjusted_close',
                        'volume',
                        'dividend_amount',
                        'split_coefficient')
@@ -76,10 +74,7 @@ class HistoricalData:
                 if row[0] not in self.tickers[ticker]:
                     self.tickers[ticker][row[0]] = {}
                 for i, col in enumerate(row[1:]):
-                    # print(row[0])
                     self.tickers[ticker][row[0]][columns[i]] = col
-
-            # print('end of daily')
 
             table_name = 'data_intraday_%s' % ticker
             raw_data = db.get_data_interval(self.conn, table_name, start_date, end_date)

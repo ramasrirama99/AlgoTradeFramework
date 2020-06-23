@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 from algotaf.backend.simulator.config import TIME, INTERVAL, DATA
 from algotaf.backend.simulator.Portfolio import Portfolio, Interval
 from algotaf.backend.simulator.Order import Order
@@ -97,28 +97,41 @@ class Backtester(StrategyEnvironment):
         self.curr_time = start_time
         self.portfolio = portfolio
         self.strategy = strategy
+        self.interval = self.strategy.interval
 
         self.strategy.env = self
         self.portfolio.env = self
 
+
     def run(self):
+        self.strategy.set_up()
         while self.curr_time < self.end_time:
             self.tick()
 
-    def tick(self):
-        if self.get_quote('amzn')['open'] != None:
-            self.portfolio.update()
-            orders, interval = self.strategy.get_orders()
-            for order in orders:
-                self.portfolio.add_position(order)
-        else:
-            interval = Interval.MINUTE1
+    def time_is_valid(self):
+        is_valid = True
 
-        if interval != Interval.ASAP and interval != Interval.ALL:
-            self.curr_time += Interval.to_timedelta(interval)
-        else:
-            print('Invalid interval\n')
-            exit()
+        if self.curr_time.weekday() >= 5:
+            self.curr_time += Interval.to_timedelta(Interval.MINUTE1)
+            return False
+
+        if self.curr_time.time() <= time(9, 30, 0) or self.curr_time.time() >= time(20, 0, 0):
+            self.curr_time += Interval.to_timedelta(Interval.MINUTE1)
+            return False
+
+        return True
+
+    def tick(self):
+        if not self.time_is_valid():
+            return
+
+        self.portfolio.update()
+        orders = self.strategy.get_orders()
+        for order in orders:
+            self.portfolio.add_position(order)
+
+        self.curr_time += Interval.to_timedelta(self.interval)
+
 
     def get_quote(self, ticker, timestamp=None, daily=False):
         if timestamp is None:
@@ -136,6 +149,7 @@ class Backtester(StrategyEnvironment):
         
         return quote
 
+
     def get_quote_interval(self, ticker, start_date, end_date, daily=True):
         quotes = []
         if daily:
@@ -151,6 +165,7 @@ class Backtester(StrategyEnvironment):
             quotes.append(self.get_quote(ticker, timestamp=time, daily=daily))
 
         return quotes
+
 
     def get_time(self):
         return self.curr_time
