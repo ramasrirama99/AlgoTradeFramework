@@ -6,7 +6,7 @@ def chunks(l, n):
     n = max(1, n)
     step = int(len(l) / n)
     for i in range(0, len(l), step):
-        big_list.append(l[i:i+n])
+        big_list.append(l[i:i+step])
     return big_list
 
 

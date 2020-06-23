@@ -175,7 +175,7 @@ def store_data_daily(backup_conn, ticker_list):
                 data_daily = api.get_daily(ticker, 'alpaca')
                 data_dividend, data_splits = api.get_actions_alpaca(ticker)
                 success = True
-            except requests.exceptions.ConnectionError:
+            except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError):
                 print('API_ERROR: SLEEPING...')
                 sleep(1)
         BENCH.mark('API Call')
@@ -223,7 +223,7 @@ def store_data_intraday(backup_conn, ticker_list):
             try:
                 data_intraday = api.get_intraday(ticker, 'alpaca')
                 success = True
-            except requests.exceptions.ConnectionError:
+            except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError):
                 print('API_ERROR: SLEEPING...')
                 sleep(1)
         BENCH.mark('API Call')
