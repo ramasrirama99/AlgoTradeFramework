@@ -10,8 +10,8 @@ def chunks(l, n):
     return big_list
 
 
-DB_NAME = 'algotaf'
-
+# DB_NAME = 'algotaf'
+DB_NAME = 'algotaf_clean'
 USERNAME = sensitive_data.USERNAME
 PASSWORD = sensitive_data.PASSWORD
 HOSTNAME = db_host.DB_HOST

@@ -9,11 +9,15 @@ os.environ['APCA_API_SECRET_KEY'] = 'jj4D0a9jWLO8t6vDiF7DM1jCzaFRO5bnbfEHevDH'
 api = REST()
 start = pd.Timestamp(2004, 6, 10, 12).isoformat()
 end = pd.Timestamp(2005, 6, 23, 12).isoformat()
-print(api.polygon.historic_agg_v2('AAPL', 1, 'minute', _from=start, to=end).df)
+# print(api.polygon.historic_agg_v2('AAPL', 1, 'minute', _from=start, to=end).df)
 # print(api.polygon.dividends('AAPL')[0]._raw)
 # print(api.polygon.splits('TXG')[0]._raw)
 
-# print(api.get_aggs('SPY',1,'minute','2020-01-01','2020-01-20')[0])
+data = api.get_aggs('SPY',1,'day','1900-01-01','2020-01-20')
+for i, record in data.df.iterrows():
+	timestamp = i.to_pydatetime()
+	print(timestamp)
+	break
 # print(api.get_aggs('GRPN',1,'day','2020-06-05','2020-06-13'))
     # data = api.get_aggs(parameters['symbol'],
     #        multiplier=parameters['multiplier'],

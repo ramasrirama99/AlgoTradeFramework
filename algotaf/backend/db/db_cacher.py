@@ -163,7 +163,7 @@ def store_data_daily(backup_conn, ticker_list):
     columns = ('timestamp', 'open', 'high', 'low', 'close', 'volume', 'dividend_amount', 'split_coefficient')
 
     for ticker in ticker_list:
-        table_name = 'data_daily_' + ticker.lower()
+        table_name = 'data_daily_' + ticker.lower().replace('.', 'dot')
 
         query = SQL('CREATE TABLE IF NOT EXISTS {} (timestamp date, open float(8), high float(8), low float(8), \
             close float(8), volume float(8), dividend_amount float(8), split_coefficient float(8));')
