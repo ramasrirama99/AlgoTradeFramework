@@ -254,7 +254,7 @@ def store_data_intraday(backup_conn, ticker_list):
 def main():
     print()
     index = int(sys.argv[1])
-    name = sys.argv[2]
+    market = sys.argv[2]
 
     if BACKUP:
         backup_conn = psycopg2.connect(dbname=config.DB_NAME,
@@ -266,20 +266,21 @@ def main():
 
     # ticker_list = config.ALL_TICKERS
     # ticker_list = ticker_list[ticker_list.index('CELH'):]
-    ticker_list = config.AMEX[index]
-    ticker_list = break_tickers(ticker_list, 'EELV')
-    store_data_intraday(backup_conn, ticker_list)
-    store_data_daily(backup_conn, ticker_list)
-
-    ticker_list = config.NASDAQ[index]
-    ticker_list = break_tickers(ticker_list, '')
-    store_data_intraday(backup_conn, ticker_list)
-    store_data_daily(backup_conn, ticker_list)
-
-    ticker_list = config.NYSE[index]
-    ticker_list = break_tickers(ticker_list, '')
-    store_data_intraday(backup_conn, ticker_list)
-    store_data_daily(backup_conn, ticker_list)
+    if market == 'AMEX':
+        ticker_list = config.AMEX[index]
+        ticker_list = break_tickers(ticker_list, '')
+        store_data_intraday(backup_conn, ticker_list)
+        # store_data_daily(backup_conn, ticker_list)
+    elif market == 'NASDAQ':
+        ticker_list = config.NASDAQ[index]
+        ticker_list = break_tickers(ticker_list, '')
+        store_data_intraday(backup_conn, ticker_list)
+        # store_data_daily(backup_conn, ticker_list)
+    elif market == 'NYSE':
+        ticker_list = config.NYSE[index]
+        ticker_list = break_tickers(ticker_list, '')
+        store_data_intraday(backup_conn, ticker_list)
+        # store_data_daily(backup_conn, ticker_list)
 
 
 if __name__ == '__main__':
