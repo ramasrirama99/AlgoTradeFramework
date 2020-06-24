@@ -3,12 +3,13 @@ from datetime import datetime, timedelta
 from algotaf.backend.simulator.Portfolio import Portfolio, Interval
 from algotaf.backend.simulator.Order import Order
 from algotaf.backend.testers.back_tester import Backtester
+from algotaf.backend.strategies.crossover_strategy import CrossoverStrategy
 import numpy as np
 import matplotlib.pyplot as plt
 
 TICKERS_SHORT = ['aapl', 'amzn', 'msft', 'amd', 'nvda', 'goog', 'baba', 'fitb', 'mu', 'fb', 'sq', 'tsm', 'qcom', 'mo',
                  'bp', 'unh', 'cvs', 'tpr']
-TEST_STOCK = 'amzn'
+TEST_STOCK = 'msft'
 
 
 class BuyAndHoldStrategy(Strategy):
@@ -44,16 +45,24 @@ class BuyAndHoldStrategy(Strategy):
 
 
 def main():
-	strat = BuyAndHoldStrategy(0.6)
+	strat = BuyAndHoldStrategy(0.5)
 	portfolio = Portfolio('BuyNHold')
-	env = Backtester(strat, portfolio, start_time=datetime(2000, 6, 10, 0, 0, 0), end_time=datetime(2019, 8, 23, 20, 0, 0))
+	env = Backtester(strat, portfolio, start_time=datetime(2003, 6, 10, 0, 0, 0), end_time=datetime(2019, 8, 23, 20, 0, 0))
 	env.run()
-	plt.plot(portfolio.equity_times, portfolio.equity_history)
+	a = plt.plot(portfolio.equity_times, portfolio.equity_history, label='{}%BuyNHold'.format(strat.percentage_to_invest * 100))
+
+	strat = CrossoverStrategy(short_period=40, long_period=200)
+	portfolio = Portfolio('CrossoverStrategy')
+	env = Backtester(strat, portfolio, start_time=datetime(2003, 6, 10, 0, 0, 0), end_time=datetime(2019, 8, 23, 20, 0, 0))
+	env.run()
+
+	b = plt.plot(portfolio.equity_times, portfolio.equity_history, label='CrossoverStrategy')
 	plt.xlabel('timestamps')
 	plt.ylabel('Portfolio equity')
+	plt.title('{}'.format(TEST_STOCK.upper()))
+	plt.legend(loc="upper left")
 	plt.show()
 	plt.savefig('results.png')
-
 
 if __name__ == "__main__":
 	main()
