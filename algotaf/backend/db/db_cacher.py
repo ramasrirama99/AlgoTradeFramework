@@ -212,7 +212,7 @@ def store_data_intraday(backup_conn, ticker_list):
     columns = ('timestamp', 'open', 'high', 'low', 'close', 'volume')
 
     for ticker in ticker_list:
-        table_name = 'data_intraday_' + ticker.lower()
+        table_name = 'data_intraday_' + ticker.lower().replace('.', 'dot')
 
         query = SQL('CREATE TABLE IF NOT EXISTS {} (timestamp timestamp, open float(8), high float(8), low float(8), \
             close float(8), volume float(8));')
