@@ -52,21 +52,23 @@ class Interval(Enum):
     def to_timedelta(interval):
         if interval is Interval.MINUTE1:
             return timedelta(minutes=1)
-        elif interval is Interval.MINUTE1:
+        elif interval is Interval.MINUTE5:
             return timedelta(minutes=5)
-        elif interval is Interval.MINUTE1:
+        elif interval is Interval.MINUTE10:
             return timedelta(minutes=10)
-        elif interval is Interval.MINUTE1:
+        elif interval is Interval.MINUTE15:
             return timedelta(minutes=15)
-        elif interval is Interval.MINUTE1:
+        elif interval is Interval.MINUTE30:
             return timedelta(minutes=30)
-        elif interval is Interval.MINUTE1:
+        elif interval is Interval.HOUR:
             return timedelta(hours=1)
-        elif interval is Interval.MINUTE1:
+        elif interval is Interval.DAY:
             return timedelta(days=1)
-        elif interval is Interval.MINUTE1:
+        elif interval is Interval.WEEK:
             return timedelta(weeks=1)
-        elif interval is Interval.MINUTE1:
+        elif interval is Interval.MONTH:
+            return timedelta(weeks=4)
+        elif interval is Interval.YEAR:
             return timedelta(years=1)
         else:
             print('Invalid Interval: %d\n' % interval)
@@ -116,15 +118,12 @@ class Portfolio:
         self.watch_list = {}
         self.orders = []
         self.history = {}
-        self.funds = 9500
+        self.funds = 10000
         self.diff = 0
         self.total_equity = 0
 
         self.equity_history = []
         self.equity_times = []
-
-        self.markers_buy = []
-        self.markers_sell = []
 
     def add_to_history(self, history_type, message, ticker, order=None, position=None):
         """
@@ -425,9 +424,10 @@ class Portfolio:
             seen_ticker = False
 
         prev_position = self.positions[order.ticker]
-            
+        
         quote = self.env.get_quote(order.ticker)
-        curr_price = 0
+        if quote['open'] == None:
+            quote = self.env.get_quote(order.ticker, daily=True)
 
         if quote['open'] and quote['close']:
             curr_price = (quote['open'] + quote['close']) / 2
@@ -435,6 +435,7 @@ class Portfolio:
             if seen_ticker:
                 curr_price = prev_position.cur_quote
             else:
+                print(self.env.curr_time)
                 print("Invalid date")
                 return
 
@@ -445,12 +446,10 @@ class Portfolio:
                 prev_position.shares = total_shares
                 prev_position.cur_quote = curr_price
                 self.funds -= cost
-                self.markers_buy.append(len(self.equity_times))
         else:
             if order.shares <= prev_position.shares:
                 self.funds += cost
                 prev_position.shares -= order.shares
-                self.markers_sell.append(len(self.equity_times))
 
     def old_add_position(self, order):
         # SECOND TIME IT IS IN
@@ -512,6 +511,8 @@ class Portfolio:
         current_equity = 0
         for ticker, position in self.positions.items():
             quote = self.env.get_quote(ticker)
+            if quote['open'] == None:
+                quote = self.env.get_quote(ticker, daily=True)
             # val = eval_quote(quote)
             if quote['open'] and quote['close']:
                 price = (quote['open'] + quote['close']) / 2

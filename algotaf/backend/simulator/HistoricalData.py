@@ -15,6 +15,7 @@ class HistoricalData:
                                      password=config.PASSWORD,
                                      host=config.HOSTNAME)
         self.tickers = {}
+        self.tickers_start_time = {}
         self.tickers_latest_time = {}
 
     def populate_data(self, tickers):
@@ -32,7 +33,6 @@ class HistoricalData:
                        'high',
                        'low',
                        'close',
-                       'adjusted_close',
                        'volume',
                        'dividend_amount',
                        'split_coefficient')
@@ -54,9 +54,11 @@ class HistoricalData:
                 for i, col in enumerate(row[1:]):
                     self.tickers[ticker][row[0]][columns[i]] = col
 
+
     def populate_data_timeframe(self, tickers, start_date, end_date):
         for ticker in tickers:
-            self.tickers[ticker] = {}
+            if ticker not in self.tickers:
+                self.tickers[ticker] = {}
 
             table_name = 'data_daily_%s' % ticker
             raw_data = db.get_data_interval(self.conn, table_name, start_date, end_date)
@@ -64,13 +66,13 @@ class HistoricalData:
                        'high',
                        'low',
                        'close',
-                       'adjusted_close',
                        'volume',
                        'dividend_amount',
                        'split_coefficient')
 
             for row in raw_data:
-                self.tickers[ticker][row[0]] = {}
+                if row[0] not in self.tickers[ticker]:
+                    self.tickers[ticker][row[0]] = {}
                 for i, col in enumerate(row[1:]):
                     self.tickers[ticker][row[0]][columns[i]] = col
 
@@ -82,11 +84,13 @@ class HistoricalData:
                        'close',
                        'volume')
             for row in raw_data:
-                self.tickers[ticker][row[0]] = {}
+                if row[0] not in self.tickers[ticker]:
+                    self.tickers[ticker][row[0]] = {}
                 for i, col in enumerate(row[1:]):
                     self.tickers[ticker][row[0]][columns[i]] = col
 
-    def get_data(self, ticker, timestamp, attribute):
+
+    def get_data(self, ticker, timestamp, attribute, daily=False):
         """
         Gets the data for a ticker at a timestamp for an attribute
         :param ticker: Ticker name
@@ -94,15 +98,22 @@ class HistoricalData:
         :param attribute: Attribute or column to query
         :return: Data or None
         """
-
-        if ticker not in self.tickers_latest_time or timestamp > self.tickers_latest_time[ticker]:
-            self.populate_data_timeframe([ticker], timestamp, timestamp + timedelta(days=1))
+        if ticker not in self.tickers_latest_time:
+            self.populate_data_timeframe([ticker], timestamp - timedelta(days=1), timestamp + timedelta(days=1))
+            self.tickers_start_time[ticker] = timestamp - timedelta(days=1)
             self.tickers_latest_time[ticker] = timestamp + timedelta(days=1)
+        elif timestamp > self.tickers_latest_time[ticker]:
+            self.populate_data_timeframe([ticker], self.tickers_latest_time[ticker], timestamp + timedelta(weeks=4))
+            self.tickers_latest_time[ticker] = timestamp + timedelta(weeks=4)
+        elif timestamp < self.tickers_start_time[ticker]:
+            self.populate_data_timeframe([ticker], timestamp - timedelta(days=1), self.tickers_start_time[ticker])
+            self.tickers_start_time[ticker] = timestamp - timedelta(days=1)
 
+        timestamp = timestamp if not daily else timestamp.date()
         if ticker in self.tickers and \
                 timestamp in self.tickers[ticker] and \
                 attribute in self.tickers[ticker][timestamp]:
-            return self.tickers[ticker][timestamp][attribute]
+                return self.tickers[ticker][timestamp][attribute]
 
         return None
 
