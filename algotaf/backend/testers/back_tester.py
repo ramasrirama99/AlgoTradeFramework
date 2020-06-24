@@ -100,6 +100,7 @@ class Backtester(StrategyEnvironment):
         self.interval = self.strategy.interval
         self.strategy.env = self
         self.portfolio.env = self
+        self.orders = []
 
         if not self.interval:
             print("Strategy must have interval attribute.")
@@ -129,9 +130,19 @@ class Backtester(StrategyEnvironment):
             return
 
         self.portfolio.update()
-        orders = self.strategy.get_orders()
+        self.orders += self.strategy.get_orders()
+        self.check_orders()
         for order in orders:
-            self.portfolio.add_position(order)
+            if time_is_valid():
+                if order.limit:
+                    if order.ticker not in self.portfolio.positions:
+                        print("Not in portfolio or priced yet")
+                    else:
+                        if order.limit_price <= self.portfolio.positions[order.ticker]:
+                            self.portfolio.add_position(order)
+
+                else:
+                    self.portfolio.add_position(order)
 
         self.curr_time += Interval.to_timedelta(self.interval)
 
@@ -172,6 +183,9 @@ class Backtester(StrategyEnvironment):
 
     def get_time(self):
         return self.curr_time
+
+    def check_orders(self):
+        self.orders = [i for i in self.orders if i.time_expire > self.curr_time]
 
 
 def main():
