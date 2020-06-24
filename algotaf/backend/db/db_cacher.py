@@ -266,17 +266,17 @@ def main():
 
     # ticker_list = config.ALL_TICKERS
     # ticker_list = ticker_list[ticker_list.index('CELH'):]
-    if market == 'AMEX':
+    if market.upper() == 'AMEX':
         ticker_list = config.AMEX[index]
         ticker_list = break_tickers(ticker_list, '')
         store_data_intraday(backup_conn, ticker_list)
         # store_data_daily(backup_conn, ticker_list)
-    elif market == 'NASDAQ':
+    elif market.upper() == 'NASDAQ':
         ticker_list = config.NASDAQ[index]
         ticker_list = break_tickers(ticker_list, '')
         store_data_intraday(backup_conn, ticker_list)
         # store_data_daily(backup_conn, ticker_list)
-    elif market == 'NYSE':
+    elif market.upper() == 'NYSE':
         ticker_list = config.NYSE[index]
         ticker_list = break_tickers(ticker_list, '')
         store_data_intraday(backup_conn, ticker_list)
