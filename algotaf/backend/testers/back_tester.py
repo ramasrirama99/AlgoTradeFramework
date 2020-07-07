@@ -25,6 +25,10 @@ def mock_decision_maker(portfolio, decision_list):
 class TestStrategy():
     def __init__(self):
         self.populate_decision_list()
+        self.interval = Interval.MINUTE1
+
+    def set_up(self):
+        pass
 
     def populate_decision_list(self):
         """
@@ -87,7 +91,7 @@ class TestStrategy():
             for i in self.decision_list[curr_time]:
                 orders.append(i)
 
-        return orders, Interval.MINUTE1
+        return orders
 
 
 class Backtester(StrategyEnvironment):
