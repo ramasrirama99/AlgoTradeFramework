@@ -3,10 +3,10 @@ from algotaf.backend.simulator.config import TIME, INTERVAL, DATA
 from algotaf.backend.simulator.Portfolio import Portfolio, Interval
 from algotaf.backend.simulator.Order import Order
 from algotaf.other.benchmark import Benchmark
-from algotaf.backend.testers.tester import StrategyEnvironment
+from algotaf.backend.testers.environment import StrategyEnvironment
 from algotaf.backend.db import db_wrapper
 import matplotlib.pyplot as plt
-
+import sys
 
 BENCH = Benchmark()
 
@@ -25,6 +25,10 @@ def mock_decision_maker(portfolio, decision_list):
 class TestStrategy():
     def __init__(self):
         self.populate_decision_list()
+        self.interval = Interval.MINUTE1
+
+    def set_up(self):
+        pass
 
     def populate_decision_list(self):
         """
@@ -87,7 +91,7 @@ class TestStrategy():
             for i in self.decision_list[curr_time]:
                 orders.append(i)
 
-        return orders, Interval.MINUTE1
+        return orders
 
 
 class Backtester(StrategyEnvironment):
@@ -98,9 +102,13 @@ class Backtester(StrategyEnvironment):
         self.portfolio = portfolio
         self.strategy = strategy
         self.interval = self.strategy.interval
-
         self.strategy.env = self
         self.portfolio.env = self
+        self.orders = []
+
+        if not self.interval:
+            print("Strategy must have interval attribute.")
+            sys.exit(1)
 
 
     def run(self):
@@ -126,9 +134,19 @@ class Backtester(StrategyEnvironment):
             return
 
         self.portfolio.update()
-        orders = self.strategy.get_orders()
-        for order in orders:
-            self.portfolio.add_position(order)
+        self.orders += self.strategy.get_orders()
+        self.check_orders()
+        for order in self.orders:
+            if self.time_is_valid():
+                if order.limit:
+                    if order.ticker not in self.portfolio.positions:
+                        print("Not in portfolio or priced yet")
+                    else:
+                        if order.limit_price <= self.portfolio.positions[order.ticker].cur_quote:
+                            self.portfolio.add_position(order)
+
+                else:
+                    self.portfolio.add_position(order)
 
         self.curr_time += Interval.to_timedelta(self.interval)
 
@@ -170,6 +188,16 @@ class Backtester(StrategyEnvironment):
     def get_time(self):
         return self.curr_time
 
+    def check_orders(self):
+        orders = []
+        for i in self.orders[:]:
+            if i.time_expire:
+                if i.time_expire > self.curr_time:
+                    orders.append(i)
+            else:
+                orders.append(i)
+        self.orders = orders
+
 
 def main():
     # print()
@@ -196,11 +224,12 @@ def main():
     env = Backtester(strat, portfolio, start_time=datetime(2019, 7, 6, 0, 0, 0), end_time=datetime(2019, 8, 23, 20, 0, 0))
     env.run()
 
-    plt.plot(portfolio.equity_times, portfolio.equity_history)
+    plt.scatter(portfolio.equity_times, portfolio.equity_history)
     plt.xlabel('timestamps')
     plt.ylabel('Portfolio equity')
+    plt.title("TestStrategy")
     plt.show()
-    plt.savefig('results.png')
+    # plt.savefig('results.png')
 
 
 if __name__ == '__main__':
