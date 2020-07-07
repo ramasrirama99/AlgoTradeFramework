@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 TICKERS_SHORT = ['aapl', 'amzn', 'msft', 'amd', 'nvda', 'goog', 'baba', 'fitb', 'mu', 'fb', 'sq', 'tsm', 'qcom', 'mo',
                  'bp', 'unh', 'cvs', 'tpr']
-TEST_STOCK = 'msft'
+TEST_STOCK = 'tsm'
 
 
 class BuyAndHoldStrategy(Strategy):

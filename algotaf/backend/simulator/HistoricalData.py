@@ -10,7 +10,7 @@ class HistoricalData:
     """
 
     def __init__(self):
-        self.conn = psycopg2.connect(dbname='algotaf',
+        self.conn = psycopg2.connect(dbname='algotaf_clean',
                                      user=config.USERNAME,
                                      password=config.PASSWORD,
                                      host=config.HOSTNAME)
