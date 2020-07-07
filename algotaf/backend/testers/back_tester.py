@@ -136,13 +136,13 @@ class Backtester(StrategyEnvironment):
         self.portfolio.update()
         self.orders += self.strategy.get_orders()
         self.check_orders()
-        for order in orders:
-            if time_is_valid():
+        for order in self.orders:
+            if self.time_is_valid():
                 if order.limit:
                     if order.ticker not in self.portfolio.positions:
                         print("Not in portfolio or priced yet")
                     else:
-                        if order.limit_price <= self.portfolio.positions[order.ticker]:
+                        if order.limit_price <= self.portfolio.positions[order.ticker].cur_quote:
                             self.portfolio.add_position(order)
 
                 else:
@@ -189,7 +189,14 @@ class Backtester(StrategyEnvironment):
         return self.curr_time
 
     def check_orders(self):
-        self.orders = [i for i in self.orders if i.time_expire > self.curr_time]
+        orders = []
+        for i in self.orders[:]:
+            if i.time_expire:
+                if i.time_expire > self.curr_time:
+                    orders.append(i)
+            else:
+                orders.append(i)
+        self.orders = orders
 
 
 def main():
@@ -217,11 +224,12 @@ def main():
     env = Backtester(strat, portfolio, start_time=datetime(2019, 7, 6, 0, 0, 0), end_time=datetime(2019, 8, 23, 20, 0, 0))
     env.run()
 
-    plt.plot(portfolio.equity_times, portfolio.equity_history)
+    plt.scatter(portfolio.equity_times, portfolio.equity_history)
     plt.xlabel('timestamps')
     plt.ylabel('Portfolio equity')
+    plt.title("TestStrategy")
     plt.show()
-    plt.savefig('results.png')
+    # plt.savefig('results.png')
 
 
 if __name__ == '__main__':

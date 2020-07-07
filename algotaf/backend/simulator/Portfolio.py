@@ -523,6 +523,7 @@ class Portfolio:
             position.cur_quote = price
 
         time = self.env.get_time()
-        self.equity_times.append(time)
+        
         self.total_equity = self.funds + current_equity
+        self.equity_times.append(time)
         self.equity_history.append(self.total_equity)
