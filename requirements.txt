@@ -14,7 +14,7 @@ scipy==1.4.1
 six==1.15.0
 ta==0.5.25
 threadpoolctl==2.1.0
-urllib3==1.25.9
+urllib3==1.26.5
 tda-api==0.3.2
 yfinance==0.1.54
 selenium==4.0.0a6post2
